@@ -1,0 +1,27 @@
+.env
+dist/
+node_modules/
+.pnpm-store/
+
+.vercel
+
+# Local data and generated files
+.env.*
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+__pycache__/
+*.py[cod]
+work/
+outputs/
+screenshot.png
+work-image-audit-*.jpg
+
+# SQLite sidecar files
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal

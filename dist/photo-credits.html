@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#173d2b">
+  <title>Photo Credits · Bhadawar Hotel</title>
+  <style>
+    :root{color-scheme:light;--green:#173d2b;--cream:#faf6ee;--ink:#1e2e24;--muted:#697468;--gold:#f4c35e}*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font:16px/1.5 Arial,sans-serif}.head{padding:30px max(calc((100vw - 1080px)/2),6vw);background:var(--green);color:#fff}.head a{color:var(--gold)}h1{font:700 clamp(32px,6vw,48px)/1.1 Georgia,serif;margin:10px 0}.wrap{max-width:1080px;margin:auto;padding:28px 20px}.note{color:var(--muted);max-width:760px}.credits{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:24px}.credit{padding:15px;background:var(--cream);border:1px solid #e8e1d4;border-radius:8px}.credit b,.credit a{display:block}.credit a{color:#28613e;overflow-wrap:anywhere;margin-top:6px;font-size:13px}.credit small{color:var(--muted);display:block;margin-top:8px}.status{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header class="head"><a href="index.html">← Back to Bhadawar Hotel</a><h1>Dish photo credits</h1><div>Images are credited to their photographers and original source pages.</div></header>
+  <main class="wrap"><p class="note">Menu photos are separate compressed WebP files. Each listing below links to its original Wikimedia Commons source and license information.</p><p class="status" id="status">Loading credits…</p><div class="credits" id="credits"></div></main>
+  <script>
+    fetch('assets/dishes/credits.json').then(r=>{if(!r.ok)throw new Error();return r.json()}).then(rows=>{document.querySelector('#status').textContent=`${rows.length} menu images`;document.querySelector('#credits').innerHTML=rows.map(row=>`<article class="credit"><b>${escapeText(row.item)}</b><a href="${safeUrl(row.source)}" target="_blank" rel="noopener">${escapeText(row.title)}</a><small>Photo: ${escapeText(row.artist)} · ${escapeText(row.license)}</small><a href="${safeUrl(row.licenseUrl)}" target="_blank" rel="noopener">License details ↗</a></article>`).join('')}).catch(()=>{document.querySelector('#status').textContent='Credits are being prepared for the menu photos.'});
+    function escapeText(value){const node=document.createElement('span');node.textContent=value||'';return node.innerHTML}
+    function safeUrl(value){try{const url=new URL(value,location.href);return ['https:','http:'].includes(url.protocol)?url.href:'#'}catch{return '#'}}
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#b51f2e">
+  <meta name="description" content="Manage your Bhadawar Hotel profile, saved address, favourites, and order history.">
+  <title>Your Bhadawar Profile · Bhadawar Hotel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=account-visual-fix-20261009">
+</head>
+<body data-page="account">
+  <header class="site-header account-header">
+    <a class="brand" href="index.html#home" aria-label="Bhadawar Hotel home"><img class="brand-mark-img" src="assets/bhadawar-mark.png" alt=""><span class="brand-text"><strong class="brand-title">BHADAWAR</strong><small class="brand-subtitle">HOTEL &amp; FOODS · AGRA</small></span></a>
+    <nav class="main-nav"><a href="index.html#menu">Menu</a><a href="index.html#gatherings">Gatherings</a><a href="index.html">Restaurant home</a></nav>
+    <a class="cart-button" href="index.html#menu">Order a meal ↗</a>
+  </header>
+  <main class="account-main">
+    <div class="account-image"><img src="assets/dishes/generated-category-thali.webp" alt="A freshly served Bhadawar-style thali"><div class="account-image-copy"><span>GOOD FOOD. GOOD PEOPLE.</span><h1>Every visit<br>brings a little <em>more.</em></h1><p>Since 1963, there’s always been room at our table.</p></div></div>
+    <section class="account-card-wrap"><div id="account-content" class="account-card"><div class="account-loading-state" role="status" aria-live="polite"><span class="account-loading-spinner" aria-hidden="true"></span><strong>Getting your account ready</strong><p>Checking your secure sign-in session…</p></div></div></section>
+  </main>
+  <footer class="account-footer"><a href="index.html">← Back to Bhadawar Hotel</a><span>BHADAWAR HOTEL · EST. 1963</span></footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="overlay" id="overlay" aria-hidden="true"><section class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><button class="dialog-close" id="dialog-close" aria-label="Close">×</button><div id="dialog-content"></div></section></div>
+  <script type="module" src="entries/account.js?v=otp-msg91-ui-20261009"></script>
+</body>
+</html>

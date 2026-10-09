@@ -1,0 +1,18 @@
+# Keep local secrets, customer data, and preview-only artifacts out of Vercel uploads.
+.env*
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+server.py
+backend_db.py
+order_pricing.py
+__pycache__/
+*.pyc
+work/
+outputs/
+work-image-audit-*.jpg
+screenshot.png
+.pnpm-store/
+node_modules/
+dist/

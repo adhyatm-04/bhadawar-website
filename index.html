@@ -1,0 +1,1064 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#c5222f">
+  <meta name="description" content="Order fresh North Indian, Chinese, Thali and Snacks from Bhadawar Hotel & Bhadawar Foods in Agra. Pure vegetarian family restaurant since 1963.">
+  <meta name="keywords" content="Bhadawar Hotel, Bhadawar Foods, Agra restaurant, Agra food delivery, North Indian, Paneer Butter Masala, Dal Makhani, vegetarian Agra">
+  <title>Bhadawar Hotel &amp; Foods · Agra — Since 1963</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=modular-auth-icons-20261009">
+</head>
+<body data-page="home">
+
+  <!-- TOP GREEN UTILITY BAR -->
+  <aside class="top-bar" aria-label="Announcement & Quick Info">
+    <div class="top-bar-container">
+      <div class="top-bar-left">
+        <button type="button" class="top-location-btn" id="top-location-btn" aria-label="Change delivery location">
+          <span class="icon-pin" data-icon="location" aria-hidden="true"></span>
+          <span><span id="top-loc-label">Delivering to</span> <strong id="top-loc-name">Agra, Mantola</strong></span>
+          <span class="dropdown-caret">▾</span>
+        </button>
+        <span class="top-pill"><span class="icon-clock" data-icon="clock" aria-hidden="true"></span> 30–45 min</span>
+        <div class="top-features">
+          <span><b class="check-icon">✓</b> Freshly prepared</span>
+          <span><b class="check-icon">✓</b> Since 1963</span>
+          <span><b class="check-icon">✓</b> Bhadawar delivery</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN HEADER -->
+  <header class="site-header" id="site-header">
+    <div class="header-container">
+      <a class="brand" href="#home" aria-label="Bhadawar Hotel Home">
+        <img class="brand-mark-img" src="assets/bhadawar-mark.png" alt="Bhadawar Hotel Logo" width="46" height="46">
+        <span class="brand-text">
+          <strong class="brand-title">BHADAWAR</strong>
+          <small class="brand-subtitle">HOTEL &amp; FOODS · AGRA</small>
+        </span>
+      </a>
+
+      <nav class="main-nav" id="main-nav" aria-label="Main Navigation">
+        <a href="#menu" class="nav-order-pill">Order online</a>
+        <a href="#food-stories" class="nav-link">Food Stories</a>
+        <a href="#leaderboard" class="nav-link">Leaderboard</a>
+        <a href="#story" class="nav-link">Our story</a>
+        <a href="#gatherings" class="nav-link">Gatherings</a>
+        <a href="#corporate" class="nav-link">Corporate</a>
+        <a href="#reviews" class="nav-link">Reviews</a>
+      </nav>
+
+      <div class="header-actions">
+        <button type="button" class="header-points-pill wallet-open" aria-label="View BH Wallet">
+          <span class="points-coin" data-icon="coin" aria-hidden="true"></span>
+          <span class="points-text">BH WALLET <b id="header-points-val">0</b></span>
+        </button>
+
+        <a href="account.html" class="header-signin-btn" id="header-signin-btn">
+          <span class="signin-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20c.8-3.3 3-5 6.5-5s5.7 1.7 6.5 5"/></svg></span>
+          <span>Sign in</span>
+        </a>
+
+        <button type="button" class="header-search-btn" id="header-search-btn" aria-label="Search menu" title="Search menu">
+          <span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4.2 4.2"/></svg></span>
+        </button>
+
+        <button type="button" class="header-cart-btn" id="open-cart" aria-label="View your order cart">
+          <span class="cart-icon" data-icon="cart" aria-hidden="true"></span>
+          <span class="cart-label">Your order</span>
+          <span class="cart-badge" id="cart-count">0</span>
+          <span class="cart-amount" id="header-cart-total">₹0</span>
+        </button>
+
+        <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Open mobile menu" aria-expanded="false">
+          <span data-icon="menu" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <button class="nav-scrim" id="nav-scrim" type="button" aria-label="Close navigation"></button>
+
+  <main>
+    <!-- HERO SECTION -->
+    <section class="hero hero-modern" id="home">
+      <div class="hero-container">
+        <!-- Left Hero Copy -->
+        <div class="hero-copy">
+          <div class="hero-eyebrow">
+            <span class="star-accent">★</span> BHADAWAR HOTEL · SINCE 1963
+          </div>
+          <h1 class="hero-title">
+            Your Agra favorites.<br>
+            <span class="hero-title-highlight">Made fresh.</span>
+          </h1>
+          <p class="hero-subhead">
+            North Indian · Chinese · Thali · Snacks · And more
+          </p>
+
+          <!-- Search Bar -->
+          <form class="hero-search-box" id="hero-search-form" role="search">
+            <span class="search-glass-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4.2 4.2"/></svg></span>
+            <input type="search" id="hero-search" placeholder="Search food (e.g. paneer, biryani, thali…)" autocomplete="off" aria-label="Search food">
+            <button type="submit" class="hero-search-submit">Search</button>
+          </form>
+
+          <!-- Order Mode Toggle Tabs -->
+          <div class="order-mode-tabs" role="group" aria-label="Choose ordering mode">
+            <button type="button" class="mode-tab selected" data-order-mode="delivery" aria-pressed="true">
+              <span class="tab-icon" data-icon="delivery" aria-hidden="true"></span> Delivery
+            </button>
+            <button type="button" class="mode-tab" data-order-mode="takeaway" aria-pressed="false">
+              <span class="tab-icon" data-icon="bag" aria-hidden="true"></span> Takeaway
+            </button>
+            <button type="button" class="mode-tab" data-order-mode="dine_in" aria-pressed="false">
+              <span class="tab-icon" data-icon="dining" aria-hidden="true"></span> Dine-in
+            </button>
+          </div>
+          <div id="dine-in-booking-shortcut" class="dine-in-booking-shortcut" hidden>
+            <span>Dining at the restaurant?</span>
+            <button type="button" id="save-table-shortcut">Save your table →</button>
+          </div>
+
+          <!-- Delivery Information Meta Strip -->
+          <div class="hero-meta-strip">
+            <div class="meta-item meta-address" data-delivery-only>
+              <span class="meta-icon" data-icon="location" aria-hidden="true"></span>
+              <div class="meta-text">
+                <small>Delivering to</small>
+                <strong><span id="hero-address-display">Agra, Mantola, Agra</span> — <button type="button" class="change-addr-btn" id="hero-change-addr">Change</button></strong>
+              </div>
+            </div>
+            <div class="meta-divider" data-delivery-only></div>
+            <div class="meta-item" data-delivery-only>
+              <span class="meta-icon" data-icon="delivery" aria-hidden="true"></span>
+              <div class="meta-text">
+                <strong>30–45 min</strong>
+                <small>Delivery time</small>
+              </div>
+            </div>
+            <div class="meta-divider" data-delivery-only></div>
+            <div class="meta-item" data-delivery-only>
+              <span class="meta-icon">₹</span>
+              <div class="meta-text">
+                <strong id="hero-delivery-fee">Free</strong>
+                <small><span class="free-highlight hero-delivery-offer">First order free · within 10 km</span></small>
+              </div>
+            </div>
+            <div class="meta-item order-mode-meta" id="hero-mode-message" hidden>
+              <span class="meta-icon" data-icon="location" aria-hidden="true"></span>
+              <div class="meta-text"><strong id="hero-mode-title"></strong><small id="hero-mode-subtitle"></small></div>
+            </div>
+            <div class="meta-divider" data-delivery-only></div>
+            <div class="meta-item">
+              <span class="meta-icon star-yellow">✦</span>
+              <div class="meta-text">
+                <strong>Since 1963</strong>
+                <small>Family-run in Agra</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Hero Visual -->
+        <div class="hero-visual" aria-label="Featured Bhadawari Special Paneer">
+          <div class="hero-image-frame">
+            <img class="hero-main-photo" src="assets/dishes/upload-paneer-bhadawari-special-paneer-sharp.webp" alt="Bhadawari Special Paneer prepared with rich spices" loading="eager">
+            <div class="hero-image-vignette"></div>
+            <div class="hero-feature-labels">
+              <span>✦ BHADAWAR SPECIAL</span>
+              <span><span data-icon="leaf" aria-hidden="true"></span> PURE VEG</span>
+              <span>Fresh from our kitchen</span>
+            </div>
+            <div class="hero-feature-caption">
+              <small>Slow cooked family recipe</small>
+              <strong>Bhadawari Special Paneer</strong>
+              <span class="hero-feature-desc">Paneer simmered with house spices and fresh cream.</span>
+              <div class="hero-feature-order-row">
+                <b>₹280</b>
+                <div class="hero-feature-order-slot" id="hero-featured-order-slot" data-dish-slot="mains-bhadawari-special-paneer"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATEGORY BUBBLES CAROUSEL -->
+    <section class="category-carousel-section" aria-label="Browse Food Categories">
+      <div class="carousel-container">
+        <div class="category-bubbles-list" id="category-bubbles" role="tablist">
+          <button type="button" class="category-bubble active" data-category="popular" role="tab" aria-selected="true">
+            <div class="bubble-img-wrap">
+              <img src="assets/dishes/generated-category-bestsellers.webp" alt="Bestsellers">
+            </div>
+            <span class="bubble-title"><span class="star-accent">★</span> Bestsellers</span>
+            <span class="bubble-indicator"></span>
+          </button>
+
+          <button type="button" class="category-bubble" data-category="mains" role="tab" aria-selected="false">
+            <div class="bubble-img-wrap">
+              <img src="assets/dishes/generated-category-main-course.webp" alt="Main Course">
+            </div>
+            <span class="bubble-title">Main Course</span>
+            <span class="bubble-indicator"></span>
+          </button>
+
+          <button type="button" class="category-bubble" data-category="snacks" role="tab" aria-selected="false">
+            <div class="bubble-img-wrap">
+              <img src="assets/dishes/generated-category-starters.webp" alt="Starters">
+            </div>
+            <span class="bubble-title">Starters</span>
+            <span class="bubble-indicator"></span>
+          </button>
+
+          <button type="button" class="category-bubble" data-category="chinese" role="tab" aria-selected="false">
+            <div class="bubble-img-wrap">
+              <img src="assets/dishes/generated-category-chinese.webp" alt="Chinese">
+            </div>
+            <span class="bubble-title">Chinese</span>
+            <span class="bubble-indicator"></span>
+          </button>
+
+          <button type="button" class="category-bubble" data-category="rice" role="tab" aria-selected="false">
+            <div class="bubble-img-wrap">
+              <img src="assets/dishes/generated-category-rice.webp" alt="Rice">
+            </div>
+            <span class="bubble-title">Rice</span>
+            <span class="bubble-indicator"></span>
+          </button>
+
+          <button type="button" class="category-bubble" data-category="breads" role="tab" aria-selected="false">
+            <div class="bubble-img-wrap">
+              <img src="assets/dishes/generated-category-breads.webp" alt="Breads">
+            </div>
+            <span class="bubble-title">Breads</span>
+            <span class="bubble-indicator"></span>
+          </button>
+
+          <button type="button" class="category-bubble" data-category="thali" role="tab" aria-selected="false">
+            <div class="bubble-img-wrap">
+              <img src="assets/dishes/generated-category-thali.webp" alt="North Indian Thali">
+            </div>
+            <span class="bubble-title">Thali</span>
+            <span class="bubble-indicator"></span>
+          </button>
+
+          <button type="button" class="category-bubble" data-category="drinks" role="tab" aria-selected="false">
+            <div class="bubble-img-wrap">
+              <img src="assets/dishes/generated-category-drinks.webp" alt="Drinks">
+            </div>
+            <span class="bubble-title">Drinks</span>
+            <span class="bubble-indicator"></span>
+          </button>
+
+          <button type="button" class="category-bubble bubble-more" id="bubble-more-btn" data-category="all" role="tab" aria-selected="false">
+            <div class="bubble-img-wrap more-wrap">
+              <span class="more-dots">•••</span>
+            </div>
+            <span class="bubble-title">More Categories</span>
+            <span class="bubble-indicator"></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHY ORDER FROM BHADAWAR STRIP -->
+    <section class="trust-banner-section" aria-label="Why order from Bhadawar">
+      <div class="trust-banner-card">
+        <h3 class="trust-banner-title">Why order from Bhadawar?</h3>
+        <div class="trust-features-grid">
+          <div class="trust-feature-item">
+            <div class="trust-icon-circle seal-icon">
+              <span>1963</span>
+            </div>
+            <div class="trust-feature-info">
+              <strong>Since 1963</strong>
+              <span>A trusted name in Agra</span>
+            </div>
+          </div>
+
+          <div class="trust-feature-item">
+            <div class="trust-icon-circle leaf-icon">
+              <span data-icon="leaf" aria-hidden="true"></span>
+            </div>
+            <div class="trust-feature-info">
+              <strong>Freshly prepared</strong>
+              <span>Authentic taste</span>
+            </div>
+          </div>
+
+          <div class="trust-feature-item">
+            <div class="trust-icon-circle bike-icon">
+              <span data-icon="delivery" aria-hidden="true"></span>
+            </div>
+            <div class="trust-feature-info">
+              <strong>Bhadawar delivery</strong>
+              <span>Fast &amp; reliable</span>
+            </div>
+          </div>
+
+          <div class="trust-feature-item">
+            <div class="trust-icon-circle card-icon">
+              <span data-icon="card" aria-hidden="true"></span>
+            </div>
+            <div class="trust-feature-info">
+              <strong>Secure payments</strong>
+              <span>UPI, Cards, COD</span>
+            </div>
+          </div>
+
+          <div class="trust-feature-item">
+            <div class="trust-icon-circle gift-icon">
+              <span data-icon="gift" aria-hidden="true"></span>
+            </div>
+            <div class="trust-feature-info">
+              <strong>Rewards</strong>
+              <span>Points on every order</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REWARDS FEATURE STRIP -->
+    <section class="rewards-feature-section" aria-label="Bhadawar rewards">
+      <div class="section-container">
+        <article class="promo-card rewards-card">
+          <div class="rewards-coin-art"><div class="big-coin-icon" data-icon="coin" aria-hidden="true"></div></div>
+          <div class="rewards-content">
+            <span class="promo-eyebrow gold-text">BHADAWAR DINER CLUB</span>
+            <h3 class="promo-headline">Earn 1 Point per ₹1 Spent. Enjoy ₹100 off.</h3>
+            <p class="rewards-intro">Every order brings you closer to a little something extra. Redeem your points on a future meal.</p>
+            <ul class="rewards-bullets">
+              <li><span class="star-accent">★</span> ₹1 spent = 1 Bhadawar Point</li>
+              <li><span class="star-accent">★</span> 100 points = ₹100 off</li>
+              <li><span class="star-accent">★</span> Birthday and milestone rewards</li>
+            </ul>
+            <button type="button" class="promo-btn btn-white wallet-open" id="join-wallet">Explore BH Wallet →</button>
+          </div>
+          <aside class="rewards-balance-panel">
+            <small>YOUR WALLET BALANCE</small>
+            <strong><span id="rewards-points-balance">100</span> <i>points</i></strong>
+            <span class="rewards-balance-value">Ready to redeem on your next order</span>
+            <button type="button" class="rewards-apply-btn wallet-open">Open BH Wallet <span>→</span></button>
+          </aside>
+        </article>
+      </div>
+    </section>
+
+    <!-- BESTSELLERS GRID SECTION -->
+    <section class="bestsellers-section" id="menu">
+      <div class="section-container">
+        <div class="section-top-bar">
+          <div>
+            <h2 class="section-heading-title"><span class="star-accent">★</span> Bestsellers</h2>
+            <p class="section-heading-sub">Our most loved dishes</p>
+          </div>
+          <button type="button" class="view-full-menu-btn" id="view-full-menu-btn">View full menu →</button>
+        </div>
+
+        <!-- Featured 4 Bestsellers Grid -->
+        <div class="bestsellers-grid" id="bestsellers-featured-grid">
+          <!-- Card 1: Bhadawari Special Paneer -->
+          <article class="dish-card featured-dish" data-dish-id="mains-bhadawari-special-paneer">
+            <div class="dish-img-wrap">
+              <img src="assets/dishes/upload-paneer-bhadawari-special-paneer-sharp.webp" alt="Bhadawari Special Paneer" loading="lazy">
+              <span class="card-tag-pill">★ Bestseller</span>
+              <button type="button" class="favorite-heart-btn" aria-label="Favorite Bhadawari Special Paneer"><span data-icon="heart" aria-hidden="true"></span></button>
+            </div>
+            <div class="dish-content">
+              <h3 class="dish-name">Bhadawari Special Paneer</h3>
+              <p class="dish-desc">Paneer simmered in a rich tomato gravy with house spices.</p>
+              <div class="dish-footer">
+                <div class="dish-pricing">
+                  <strong class="dish-price">₹280</strong>
+                  <span class="dish-rating">Made fresh daily</span>
+                </div>
+                <div class="dish-action-slot" data-dish-slot="mains-bhadawari-special-paneer">
+                  <button type="button" class="add-to-cart-btn" data-add="mains-bhadawari-special-paneer">Add +</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 2: Paneer Tikka -->
+          <article class="dish-card featured-dish" data-dish-id="snacks-paneer-tikka">
+            <div class="dish-img-wrap">
+              <img src="assets/dishes/upload-snacks-paneer-tikka-sharp.webp" alt="Paneer Tikka" loading="lazy">
+              <button type="button" class="favorite-heart-btn" aria-label="Favorite Paneer Tikka"><span data-icon="heart" aria-hidden="true"></span></button>
+            </div>
+            <div class="dish-content">
+              <h3 class="dish-name">Paneer Tikka</h3>
+              <p class="dish-desc">Charred paneer, mint chutney</p>
+              <div class="dish-footer">
+                <div class="dish-pricing">
+                  <strong class="dish-price">₹200</strong>
+                  <span class="dish-rating">Made fresh daily</span>
+                </div>
+                <div class="dish-action-slot" data-dish-slot="snacks-paneer-tikka">
+                  <button type="button" class="add-to-cart-btn" data-add="snacks-paneer-tikka">Add +</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 3: Dal Makhani -->
+          <article class="dish-card featured-dish" data-dish-id="daal-daal-makhni">
+            <div class="dish-img-wrap">
+              <img src="assets/dishes/upload-daal-makhni-sharp.webp" alt="Dal Makhani" loading="lazy">
+              <button type="button" class="favorite-heart-btn" aria-label="Favorite Dal Makhani"><span data-icon="heart" aria-hidden="true"></span></button>
+            </div>
+            <div class="dish-content">
+              <h3 class="dish-name">Dal Makhani</h3>
+              <p class="dish-desc">Slow cooked black lentils</p>
+              <div class="dish-footer">
+                <div class="dish-pricing">
+                  <strong class="dish-price">₹200</strong>
+                  <span class="dish-rating">Made fresh daily</span>
+                </div>
+                <div class="dish-action-slot" data-dish-slot="daal-daal-makhni">
+                  <button type="button" class="add-to-cart-btn" data-add="daal-daal-makhni">Add +</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 4: Butter Naan -->
+          <article class="dish-card featured-dish" data-dish-id="breads-butter-naan">
+            <div class="dish-img-wrap">
+              <img src="assets/dishes/remaining-hires-breads-butter-naan.webp" alt="Butter Naan" loading="lazy">
+              <button type="button" class="favorite-heart-btn" aria-label="Favorite Butter Naan"><span data-icon="heart" aria-hidden="true"></span></button>
+            </div>
+            <div class="dish-content">
+              <h3 class="dish-name">Butter Naan</h3>
+              <p class="dish-desc">Soft &amp; fresh</p>
+              <div class="dish-footer">
+                <div class="dish-pricing">
+                  <strong class="dish-price">₹45</strong>
+                  <span class="dish-rating">Made fresh daily</span>
+                </div>
+                <div class="dish-action-slot" data-dish-slot="breads-butter-naan">
+                  <button type="button" class="add-to-cart-btn" data-add="breads-butter-naan">Add +</button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- FULL MENU BROWSER (EXPANDABLE) -->
+        <div class="full-menu-container" id="full-menu-container" hidden>
+          <div class="menu-filter-toolbar">
+            <div class="search-wrap">
+            <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4.2 4.2"/></svg></span>
+              <input type="search" id="menu-search" placeholder="Search 136 dishes…" aria-label="Search dishes">
+            </div>
+            <label class="veg-toggle-wrap">
+              <input type="checkbox" id="veg-only" checked>
+              <span class="veg-badge-dot"></span>
+              <span>Pure Veg</span>
+            </label>
+            <div class="spice-select-wrap">
+              <span>Spice:</span>
+              <select id="spice-filter" aria-label="Filter by spice level">
+                <option value="all">All spice</option>
+                <option value="Mild">Mild</option>
+                <option value="Medium">Medium</option>
+                <option value="Hot">Hot</option>
+              </select>
+            </div>
+            <div class="menu-result-count" id="menu-result-count" aria-live="polite"></div>
+          </div>
+
+          <div class="menu-grid" id="menu-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REWARDS AND CORPORATE PROMO CARDS -->
+    <section class="promo-banners-section" aria-label="Special Offers and Bookings">
+      <div class="section-container">
+        <div class="promo-cards-grid">
+          <!-- Card 2: Corporate Catering -->
+          <article class="promo-card photo-card corporate-card" id="corporate" style="background-image: linear-gradient(180deg, rgba(16,14,12,0.45) 0%, rgba(16,14,12,0.85) 100%), url('https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&amp;fit=crop&amp;w=800&amp;q=80');">
+            <div class="photo-card-content">
+              <span class="promo-eyebrow">Corporate Catering</span>
+              <h3 class="promo-headline">For offices, teams &amp; events</h3>
+              <button type="button" class="promo-btn btn-white" data-booking="corporate">View corporate menu →</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- BHADAWAR FOOD STORIES — Premium Redesign -->
+    <section class="fs-section" id="food-stories" aria-label="Bhadawar Food Stories">
+
+      <!-- ── HERO BANNER ── -->
+      <div class="fs-hero">
+        <div class="fs-hero-inner">
+          <div class="fs-hero-text">
+            <div class="fs-eyebrow"><span data-icon="restaurant" aria-hidden="true"></span> Bhadawar Food Stories</div>
+            <h2 class="fs-hero-title">Real Stories,<br><em>Real Flavors.</em></h2>
+            <p class="fs-hero-desc">Fresh food stories from the Bhadawar kitchen, alongside guest moments approved by our team. Share a photo or video and earn <strong>1 Bhadawar Point</strong> when your story is approved.</p>
+            <button type="button" class="fs-share-btn btn-share-story" id="open-story-modal-btn">
+              <span class="fs-share-icon" data-icon="edit" aria-hidden="true"></span>
+              Share your food story
+              <span class="fs-pts-chip">+1 Pt</span>
+            </button>
+          </div>
+          <div class="fs-hero-cards">
+            <button type="button" class="fs-info-card" data-story-shortcut="feed" aria-label="Browse food stories">
+              <div class="fs-info-icon" data-icon="book" aria-hidden="true"></div>
+              <div class="fs-info-label">Food Stories</div>
+              <div class="fs-info-sub">Kitchen stories and approved guest moments</div>
+            </button>
+            <button type="button" class="fs-info-card fs-info-card--gold" data-story-shortcut="leaderboard" aria-label="Open the food blog leaderboard">
+              <div class="fs-info-icon" data-icon="trophy" aria-hidden="true"></div>
+              <div class="fs-info-label">Food Blog Leaderboard</div>
+              <div class="fs-info-sub">Top five monthly storytellers win surprise gifts</div>
+            </button>
+            <button type="button" class="fs-info-card fs-info-card--green" data-story-shortcut="bonus" aria-label="Share feedback for a completed order above 599 rupees">
+              <div class="fs-info-icon" data-icon="gift" aria-hidden="true"></div>
+              <div class="fs-info-label">₹599+ Order Bonus</div>
+              <div class="fs-info-sub">+2 points on approved feedback for a completed ₹599+ order</div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── INSTAGRAM STORY BAR ── -->
+      <div class="fs-story-bar-wrap">
+        <div class="fs-story-bar" id="fs-story-bar">
+          <!-- Add Story chip -->
+          <button type="button" class="fs-story-bubble fs-story-add btn-share-story">
+            <div class="fs-bubble-ring fs-bubble-ring--add">
+              <div class="fs-bubble-img fs-bubble-add-icon">+</div>
+            </div>
+            <span class="fs-bubble-name">Add Story</span>
+          </button>
+          <!-- Dynamically populated story bubbles -->
+        </div>
+      </div>
+
+      <!-- ── MAIN CONTENT: FEED + VIEWER + LEADERBOARD ── -->
+      <div class="fs-main-wrap section-container">
+
+        <!-- LEFT: Latest Stories Feed -->
+        <div class="fs-feed-col">
+          <!-- Tabs -->
+          <div class="fs-tabs">
+            <button class="fs-tab active" data-story-tab="feed"><span data-icon="book" aria-hidden="true"></span> Stories <span class="fs-tab-count" id="stories-count-badge">0</span></button>
+            <button class="fs-tab" data-story-tab="leaderboard"><span data-icon="trophy" aria-hidden="true"></span> Leaderboard</button>
+          </div>
+
+          <!-- Order Bonus Banner -->
+          <div class="fs-bonus-banner" id="feed-bonus-banner">
+            <span class="fs-bonus-icon" data-icon="gift" aria-hidden="true"></span>
+            <div class="fs-bonus-text">
+              <strong>Order Bonus:</strong> Completed orders with a food subtotal above ₹599 earn <strong>+2 Bhadawar Points</strong> when linked feedback is approved.
+            </div>
+            <div class="fs-bonus-actions">
+              <button type="button" class="fs-bonus-cta" id="feed-review-shortcut">Share order feedback →</button>
+              <a class="fs-google-review-link" id="google-review-link" target="_blank" rel="noopener noreferrer">Google Review</a>
+            </div>
+          </div>
+
+          <!-- FEED PANEL -->
+          <div id="panel-stories-feed" class="fs-panel">
+            <div class="fs-cards-grid" id="published-stories-grid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- LEADERBOARD PANEL (hidden by default) -->
+          <div id="panel-stories-leaderboard" class="fs-panel" hidden>
+            <div class="fs-lb-header" id="leaderboard">
+              <div>
+                <h3 class="fs-lb-title">Food Blog Leaderboard</h3>
+                <p class="fs-lb-sub">Top contributors ranked by approved stories &amp; reward points</p>
+              </div>
+              <div class="fs-lb-toggle">
+                <button class="fs-lb-btn active" data-period="monthly"><span data-icon="clock" aria-hidden="true"></span> Monthly</button>
+                <button class="fs-lb-btn" data-period="alltime"><span data-icon="trophy" aria-hidden="true"></span> All-Time</button>
+              </div>
+            </div>
+            <div class="fs-podium-grid" id="podium-cards-grid"></div>
+            <div class="fs-lb-table-wrap">
+              <table class="fs-lb-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Foodie</th>
+                    <th>Stories</th>
+                    <th>Points</th>
+                    <th>Badge</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Story Viewer Panel -->
+        <aside class="fs-viewer-col" id="fs-viewer-col" aria-label="Story Viewer">
+          <div class="fs-viewer-card" id="fs-viewer-card">
+            <!-- Header -->
+            <div class="fs-viewer-header">
+              <span class="fs-viewer-label"><span data-icon="story" aria-hidden="true"></span> Story Viewer</span>
+              <div class="fs-viewer-hdr-btns">
+                <button class="fs-viewer-mute-btn" id="fs-pause-btn" title="Pause story" aria-label="Pause story"><span data-icon="pause" aria-hidden="true"></span></button>
+                <button class="fs-viewer-mute-btn" id="fs-mute-btn" title="Muted by default" aria-label="Unmute story"><span data-icon="soundOff" aria-hidden="true"></span></button>
+                <button class="fs-viewer-close-btn" id="fs-viewer-close" title="Close viewer" aria-label="Close story viewer"><span data-icon="close" aria-hidden="true"></span></button>
+              </div>
+            </div>
+            <!-- Progress bar -->
+            <div class="fs-viewer-progress-row" id="fs-progress-row"></div>
+            <!-- Media -->
+            <div class="fs-viewer-media-wrap">
+              <img class="fs-viewer-img" id="fs-viewer-img" src="assets/food-paneer.jpg" alt="">
+              <video class="fs-viewer-img" id="fs-viewer-video" playsinline hidden></video>
+              <div class="fs-viewer-overlay">
+                <div class="fs-viewer-author-row" id="fs-viewer-author"></div>
+                <div class="fs-viewer-text-box">
+                  <div class="fs-viewer-dish" id="fs-viewer-dish"></div>
+                  <p class="fs-viewer-story" id="fs-viewer-story"></p>
+                </div>
+              </div>
+              <!-- Nav arrows -->
+              <button class="fs-viewer-nav fs-viewer-prev" id="fs-viewer-prev">‹</button>
+              <button class="fs-viewer-nav fs-viewer-next" id="fs-viewer-next">›</button>
+            </div>
+            <!-- Footer -->
+            <div class="fs-viewer-footer">
+              <div class="fs-viewer-stars" id="fs-viewer-stars"></div>
+              <button class="fs-viewer-read-btn" id="fs-viewer-read-btn">View Full Story →</button>
+            </div>
+          </div>
+
+          <!-- Mini Leaderboard below viewer -->
+          <div class="fs-mini-lb" id="fs-mini-lb">
+            <div class="fs-mini-lb-header">
+              <span><span data-icon="trophy" aria-hidden="true"></span> Top Foodies</span>
+              <div class="fs-lb-toggle">
+                <button class="fs-lb-btn active" data-period="monthly" data-mini="1">Monthly</button>
+                <button class="fs-lb-btn" data-period="alltime" data-mini="1">All-Time</button>
+              </div>
+            </div>
+            <div class="fs-mini-lb-list" id="fs-mini-lb-list"></div>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- REVIEWS / GUEST LOVE SECTION -->
+    <section class="reviews-section-modern" id="reviews">
+      <div class="section-container">
+        <div class="section-top-bar">
+          <div class="reviews-head-wrap">
+            <h2 class="section-heading-title">Your feedback matters</h2>
+            <p class="reviews-intro-copy">Tell us about your visit. We’ll share genuine guest feedback here as it comes in.</p>
+          </div>
+          <button type="button" class="write-review-btn" id="write-review">Share feedback →</button>
+        </div>
+
+        <div class="reviews-cards-grid" id="review-grid">
+          <article class="review-quote-card reviews-honest-placeholder"><span aria-hidden="true">✦</span><strong>Be the first to share your experience</strong><p>Dish feedback helps our team make each visit better.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4-TILE VISUAL SHOWCASE -->
+    <section class="visual-showcase" id="visual-showcase" aria-label="Bhadawar restaurant and catering">
+      <div class="section-container">
+        <div class="showcase-tiles-grid">
+          <!-- Restaurant -->
+          <a href="#menu" class="showcase-tile" style="background-image: linear-gradient(180deg, rgba(16,14,12,0.15) 0%, rgba(16,14,12,0.85) 100%), url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&amp;fit=crop&amp;w=600&amp;q=80');">
+            <div class="showcase-caption">
+              <strong>Restaurant</strong>
+              <span>Delicious food since 1963 →</span>
+            </div>
+          </a>
+
+          <!-- Parties & Gatherings -->
+          <div class="showcase-tile" id="gatherings" data-booking="party" style="background-image: linear-gradient(180deg, rgba(16,14,12,0.15) 0%, rgba(16,14,12,0.85) 100%), url('https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&amp;fit=crop&amp;w=600&amp;q=80');">
+            <div class="showcase-caption">
+              <strong>Parties &amp; Gatherings</strong>
+              <span>Celebrate your special moments →</span>
+            </div>
+          </div>
+
+          <!-- Corporate Catering -->
+          <div class="showcase-tile" data-booking="corporate" style="background-image: linear-gradient(180deg, rgba(16,14,12,0.15) 0%, rgba(16,14,12,0.85) 100%), url('https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&amp;fit=crop&amp;w=600&amp;q=80');">
+            <div class="showcase-caption">
+              <strong>Corporate Catering</strong>
+              <span>Team meals, conferences &amp; more →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OUR STORY & HERITAGE SECTION -->
+    <section class="our-story-section" id="story" aria-label="Our Story - Bhadawar Heritage">
+      <div class="section-container">
+        <div class="story-grid-wrap">
+          <div class="story-text-col">
+            <div class="hero-eyebrow">
+              <span class="star-accent">★</span> AGRA HERITAGE · SINCE 1963
+            </div>
+            <h2 class="section-heading-title">Serving Agra with love for over 60 years.</h2>
+            <p class="story-p">
+              Founded in 1963 at Mantola, Agra, <strong>Bhadawar Hotel &amp; Foods</strong> has been a cornerstone of authentic North Indian cuisine, welcoming generations of families, travelers, and food lovers.
+            </p>
+            <p class="story-p">
+              From our legendary slow-cooked <em>Bhadawar Makhani</em> to fresh tandoori breads, every recipe preserves the cherished balance of rich spices, pure vegetarian ingredients, and homestyle hospitality.
+            </p>
+            <div class="story-highlights-row">
+              <div class="story-stat-card">
+                <strong>1963</strong>
+                <small>Established in Agra</small>
+              </div>
+              <div class="story-stat-card">
+                <strong>130+</strong>
+                <small>Fresh Vegetarian Dishes</small>
+              </div>
+              <div class="story-stat-card">
+                <strong>100%</strong>
+                <small>Pure Veg &amp; Hygienic</small>
+              </div>
+            </div>
+          </div>
+          <div class="story-visual-col">
+            <img class="story-banner-img" src="assets/dishes/remaining-hires-thali-maharaja-thali.webp" alt="A Maharaja thali from Bhadawar’s Agra menu">
+            <div class="story-floating-badge">
+              <span>✦</span> Agra's Trusted Taste Since 1963
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESTAURANT LOCATION -->
+    <section class="location-section" id="location" aria-label="Find Bhadawar in Agra">
+      <div class="section-container location-layout">
+        <div class="location-copy">
+          <div class="hero-eyebrow"><span class="star-accent">★</span> VISIT BHADAWAR</div>
+          <h2 class="section-heading-title">Find us in <em>Agra</em></h2>
+          <p>Stop by for a fresh meal at Bhadawar Hotel &amp; Foods. Open the map for directions to our restaurant.</p>
+          <div class="location-address"><span data-icon="location" aria-hidden="true"></span><span>3, Daresi, Near Patthar Mandi, Mantola, Agra</span></div>
+          <div class="location-hours"><span data-icon="clock" aria-hidden="true"></span><span>Daily · 11:00 AM–12:00 AM</span></div>
+          <a class="location-directions-btn" href="https://www.google.com/maps/search/?api=1&amp;query=Bhadawar+Hotel%2C+3+Daresi%2C+Near+Pathhar+Mandi%2C+Mantola%2C+Agra" target="_blank" rel="noopener noreferrer">
+            Open directions in Google Maps <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+        <div class="location-map-frame">
+          <iframe
+            title="Bhadawar Hotel & Foods location in Mantola, Agra on Google Maps"
+            src="https://www.google.com/maps?q=Bhadawar+Hotel%2C+3+Daresi%2C+Near+Pathhar+Mandi%2C+Mantola%2C+Agra&amp;z=17&amp;output=embed"
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    </section>
+
+  <!-- DEEP BURGUNDY FOOTER -->
+  <footer class="site-footer-modern">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <!-- Col 1: Brand Info -->
+        <div class="footer-col brand-col">
+          <div class="footer-brand-header">
+            <img class="footer-logo" src="assets/bhadawar-mark.png" alt="Bhadawar mark" width="46" height="46">
+            <div>
+              <strong class="footer-brand-title">BHADAWAR</strong>
+              <small class="footer-brand-subtitle">HOTEL &amp; FOODS · AGRA</small>
+            </div>
+          </div>
+          <p class="footer-tagline">Since 1963 · Family restaurant in Agra</p>
+          <div class="footer-heritage-badge">✦ AGRA HERITAGE ✦</div>
+        </div>
+
+        <!-- Col 2: Quick Links -->
+        <div class="footer-col">
+          <h4 class="footer-col-title">Quick links</h4>
+          <ul class="footer-nav-list">
+            <li><a href="#menu">Order online</a></li>
+            <li><a href="#food-stories">Food Stories</a></li>
+            <li><a href="#leaderboard">Food Leaderboard</a></li>
+            <li><a href="#story">Our story</a></li>
+            <li><a href="#gatherings">Gatherings</a></li>
+            <li><a href="#corporate">Corporate</a></li>
+            <li><a href="#location">Find us</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Help -->
+        <div class="footer-col">
+          <h4 class="footer-col-title">Help</h4>
+          <ul class="footer-nav-list">
+            <li><button type="button" data-drawer-track>Track order</button></li>
+            <li><button type="button" data-learn-more="help">FAQ</button></li>
+            <li><button type="button" data-learn-more="returns">Returns &amp; refunds</button></li>
+            <li><button type="button" data-learn-more="privacy">Privacy policy</button></li>
+            <li><button type="button" data-learn-more="terms">Terms &amp; conditions</button></li>
+            <li><button type="button" id="staff-portals">Team sign in ↗</button></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Contact -->
+        <div class="footer-col contact-col">
+          <h4 class="footer-col-title">Contact</h4>
+          <ul class="footer-contact-list">
+            <li>
+              <span class="contact-icon" data-icon="location" aria-hidden="true"></span>
+              <a id="restaurant-address" href="https://www.google.com/maps/search/?api=1&amp;query=Bhadawar+Hotel%2C+3+Daresi%2C+Near+Pathhar+Mandi%2C+Mantola%2C+Agra" target="_blank" rel="noopener noreferrer">3, Daresi, Near Pathhar Mandi, Mantola, Agra</a>
+            </li>
+            <li>
+              <span class="contact-icon" data-icon="phone" aria-hidden="true"></span>
+              <a href="tel:+918273659922" id="restaurant-phone">+91 82736 59922</a>
+            </li>
+            <li>
+              <span class="contact-icon" data-icon="chat" aria-hidden="true"></span>
+              <a href="https://wa.me/918273659922" id="footer-whatsapp" target="_blank" rel="noopener">WhatsApp us</a>
+            </li>
+            <li>
+              <span class="contact-icon" data-icon="clock" aria-hidden="true"></span>
+              <span id="opening-hours">Daily · 11:00 AM–12:00 AM</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Col 5: Food Platforms -->
+        <div class="footer-col platforms-col">
+          <h4 class="footer-col-title">We're also on</h4>
+          <div class="platform-badges-row">
+            <a href="https://www.zomato.com/agra/bhadawar-hotel-mantola/menu" target="_blank" rel="noopener" class="platform-pill zomato-pill">
+              <span class="platform-bold">zomato</span>
+            </a>
+            <a href="https://www.swiggy.com/city/agra/bhadawar-foods-gajanan-nagar-civil-lines-rest175478" target="_blank" rel="noopener" class="platform-pill swiggy-pill">
+              <span class="swiggy-icon" data-icon="restaurant" aria-hidden="true"></span>
+              <span class="platform-bold">Swiggy</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Bottom Bar -->
+      <div class="footer-bottom-bar">
+        <div class="footer-copy-text">© 2026 Bhadawar Hotel. Made with care in Agra.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- FLOATING SIDEBAR CART DRAWER (AS IN SCREENSHOT) -->
+  <aside class="side-drawer cart-drawer" id="cart-drawer" role="dialog" aria-modal="true" aria-label="Your Order Cart" tabindex="-1" hidden>
+    <div class="drawer-header">
+      <h3 class="drawer-title">Your order (<span id="drawer-cart-count">0 items</span>)</h3>
+      <button type="button" class="drawer-close-btn" id="cart-drawer-close" aria-label="Close cart">×</button>
+    </div>
+    
+    <div class="drawer-body">
+      <!-- Items List -->
+      <div class="cart-items-list" id="drawer-cart-items"></div>
+
+      <!-- Apply Coupon -->
+      <button type="button" class="coupon-row" id="coupon-row" aria-label="View available offers">
+        <span class="coupon-icon" data-icon="tag" aria-hidden="true"></span>
+        <span class="coupon-label">View available offers</span>
+        <span class="coupon-arrow">›</span>
+      </button>
+
+      <!-- Use Points Toggle -->
+      <div class="wallet-points-card">
+        <div class="points-toggle-info">
+          <div class="points-badge-tag"><span data-icon="coin" aria-hidden="true"></span> Use Bhadawar Points</div>
+          <small class="points-sub">You have <b id="cart-wallet-balance">0 points (₹0)</b></small>
+        </div>
+        <label class="switch-toggle" aria-label="Toggle Bhadawar Points redemption">
+          <input type="checkbox" id="cart-use-points">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Bill Breakdown -->
+      <div class="drawer-bill-summary">
+        <div class="bill-row">
+          <span>Item total</span>
+          <span id="bill-item-total">₹0</span>
+        </div>
+        <div class="bill-row" id="bill-discount-row" hidden>
+          <span class="discount-label">Points discount</span>
+          <span id="bill-discount">−₹0</span>
+        </div>
+        <div class="bill-row">
+          <span id="bill-service-fee-label">Delivery fee</span>
+          <span id="bill-delivery-fee">₹0</span>
+        </div>
+        <div class="bill-row">
+          <span>Tax (5%)</span>
+          <span id="bill-tax">₹0</span>
+        </div>
+        <div class="bill-row bill-total-row">
+          <strong>Total</strong>
+          <strong id="bill-grand-total">₹0</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-footer">
+      <button type="button" class="checkout-submit-btn" id="drawer-proceed-btn">
+        Proceed to checkout →
+      </button>
+    </div>
+  </aside>
+
+  <!-- ADDRESS SELECTION DRAWER / MODAL (AS IN SCREENSHOT) -->
+  <aside class="side-drawer address-drawer" id="address-drawer" role="dialog" aria-modal="true" aria-label="Delivery Address" tabindex="-1" hidden>
+    <div class="drawer-header">
+      <h3 class="drawer-title">Delivering to</h3>
+      <button type="button" class="drawer-close-btn" id="address-drawer-close" aria-label="Close address drawer">×</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- Address Tabs -->
+      <div class="address-mode-tabs">
+        <button type="button" class="addr-tab active" data-addr-tab="saved">Saved</button>
+        <button type="button" class="addr-tab" data-addr-tab="search">Search</button>
+        <button type="button" class="addr-tab" data-addr-tab="current">Current Location</button>
+      </div>
+
+      <form id="address-edit-form" class="address-form-grid">
+        <div class="addr-field-group">
+          <div class="addr-field">
+            <label for="addr-flat">Flat / House no.</label>
+            <input type="text" id="addr-flat" value="12A" required placeholder="Flat, floor, building">
+          </div>
+          <div class="addr-field">
+            <label for="addr-area">Area / Street</label>
+            <input type="text" id="addr-area" value="Mantola" required placeholder="Street or colony">
+          </div>
+        </div>
+
+        <div class="addr-field full-width">
+          <label for="addr-landmark">Landmark (optional)</label>
+          <input type="text" id="addr-landmark" value="Near Patthar Mandi" placeholder="Nearby famous spot">
+        </div>
+
+        <div class="addr-field full-width">
+          <label for="addr-phone">Phone number</label>
+          <input type="tel" id="addr-phone" value="+91 98765 43210" required placeholder="10-digit mobile number">
+        </div>
+
+        <div class="addr-field full-width delivery-distance-field">
+          <label for="addr-distance-band">Approximate distance from Bhadawar</label>
+          <select id="addr-distance-band">
+            <option value="under5">Up to 5 km · ₹35 standard delivery</option>
+            <option value="5to10">Above 5 km to 10 km · ₹50 standard delivery</option>
+            <option value="over10">Over 10 km · Delivery unavailable</option>
+          </select>
+          <small>First order delivery is free within the 10 km service range.</small>
+        </div>
+
+        <!-- Mini Map Preview with Location Pin -->
+        <div class="address-map-preview">
+          <div class="map-graphic">
+            <div class="map-grid-lines"></div>
+            <div class="map-road-1"></div>
+            <div class="map-road-2"></div>
+            <div class="map-pin-pulse">
+              <span class="pin-symbol" data-icon="location" aria-hidden="true"></span>
+            </div>
+          </div>
+          <iframe id="address-location-map" title="Your delivery pin on Google Maps" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" hidden></iframe>
+          <button type="button" class="use-location-btn" id="use-gps-btn">
+            <span class="gps-icon">⌖</span> Use my current location
+          </button>
+          <p class="address-location-status" id="addr-location-status" aria-live="polite">Share your location to attach a map pin to your delivery order.</p>
+          <a class="address-google-maps-link" id="addr-google-maps-link" target="_blank" rel="noopener noreferrer" hidden>Open saved pin in Google Maps ↗</a>
+        </div>
+
+        <!-- Save As Tags -->
+        <div class="save-tag-group">
+          <span class="save-tag-label">Save as</span>
+          <div class="tag-pills">
+            <label class="tag-pill">
+              <input type="radio" name="addr-tag" value="Home" checked>
+              <span><span data-icon="home" aria-hidden="true"></span> Home</span>
+            </label>
+            <label class="tag-pill">
+              <input type="radio" name="addr-tag" value="Work">
+              <span><span data-icon="work" aria-hidden="true"></span> Work</span>
+            </label>
+            <label class="tag-pill">
+              <input type="radio" name="addr-tag" value="Other">
+              <span><span data-icon="location" aria-hidden="true"></span> Other</span>
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="save-address-submit-btn">
+          Save address
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- DRAWER BACKDROP -->
+  <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- GENERAL DIALOG OVERLAY (CHECKOUT, BOOKINGS, STAFF, OTP) -->
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <section class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+      <button class="dialog-close" id="dialog-close" aria-label="Close modal">×</button>
+      <div id="dialog-content"></div>
+    </section>
+  </div>
+
+  <!-- CUSTOMER ASSISTANT CHAT WIDGET -->
+  <aside class="customer-chat" id="customer-chat" aria-label="Bhadawar website help">
+    <button class="chat-launch" id="chat-launch" type="button" aria-expanded="false" aria-controls="chat-panel">
+      <span aria-hidden="true">✦</span> Need help?
+    </button>
+    <section class="chat-panel" id="chat-panel" aria-label="Chat with Bhadawar help" hidden>
+      <header class="chat-header">
+        <span class="chat-avatar" aria-hidden="true">B</span>
+        <div>
+          <b>Bhadawar Help</b>
+          <small>Website assistant · preview</small>
+        </div>
+        <button type="button" id="chat-close" aria-label="Close help chat">×</button>
+      </header>
+      <div class="chat-topics" aria-label="Quick help topics">
+        <button type="button" data-chat-question="How do I place an order?">Ordering</button>
+        <button type="button" data-chat-question="How do wallet points work?">Wallet</button>
+        <button type="button" data-chat-question="How do I book a dine-in table?">Dine-in</button>
+        <button type="button" data-chat-question="What are the payment options?">Payments</button>
+      </div>
+      <div class="chat-log" id="chat-log" role="log" aria-live="polite">
+        <div class="chat-bubble assistant">Hello! I can help with ordering, payments, wallet points, bookings, and website questions. What would you like to know?</div>
+      </div>
+      <form class="chat-form" id="chat-form">
+        <input id="chat-input" type="text" autocomplete="off" placeholder="Ask us something…" aria-label="Your question">
+        <button type="submit" aria-label="Send message">→</button>
+      </form>
+      <small class="chat-disclaimer">Preview assistant · live order lookup and human chat are simulated.</small>
+    </section>
+  </aside>
+
+  <!-- SCRIPTS -->
+  <script type="module" src="entries/home.js?v=papad-photo-fix-20261009"></script>
+</body>
+</html>
