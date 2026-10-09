@@ -1,0 +1,1 @@
+"""Bhadawar backend application."""

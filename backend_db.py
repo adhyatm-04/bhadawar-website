@@ -10,8 +10,15 @@ from datetime import datetime
 DB_PATH = os.environ.get('BHADAWAR_DB_PATH', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bhadawar.db'))
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute("PRAGMA foreign_keys = ON;")
+    database_url = os.environ.get('DATABASE_URL', '').strip()
+    if database_url:
+        from backend.database import connect_database, upgrade_schema
+        upgrade_schema()
+        return connect_database()
+    else:
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        conn.execute("PRAGMA foreign_keys = ON;")
+        conn.execute("PRAGMA busy_timeout = 30000")
     cursor = conn.cursor()
 
     # 1. Menu items table
