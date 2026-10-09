@@ -12,9 +12,9 @@ DB_PATH = os.environ.get('BHADAWAR_DB_PATH', os.path.join(os.path.dirname(os.pat
 def init_db():
     database_url = os.environ.get('DATABASE_URL', '').strip()
     if database_url:
-        from backend.database import connect_database, upgrade_schema
+        from backend.database import connect_session, upgrade_schema
         upgrade_schema()
-        return connect_database()
+        return connect_session()
     else:
         conn = sqlite3.connect(DB_PATH, timeout=30)
         conn.execute("PRAGMA foreign_keys = ON;")
@@ -151,6 +151,25 @@ def init_db():
     return conn
 
 def seed_db(conn):
+    if hasattr(conn, 'scalars'):
+        from sqlalchemy import func, select
+        from backend.models import Review, WalletAccount, WalletTransaction
+
+        default_phone = '+91 98765 43210'
+        if not conn.get(WalletAccount, default_phone):
+            conn.add(WalletAccount(phone=default_phone, customer_name='Bhadawar Guest', balance=100))
+            conn.add(WalletTransaction(phone=default_phone, type='credit', amount=100,
+                                       label='Welcome to Bhadawar Wallet'))
+        if (conn.scalar(select(func.count(Review.id))) or 0) == 0:
+            conn.add_all([
+                Review(name='Amit Sharma', rating=5, review_text='Amazing food! The Bhadawar Makhani is a must try. Great taste and timely delivery.'),
+                Review(name='Priya Verma', rating=5, review_text='Authentic North Indian taste in Agra. Loved the packaging and the fresh food. Will order again!'),
+                Review(name='Rohit Gupta', rating=5, review_text='Best restaurant in Agra for family dining. The thali is excellent and service is quick.'),
+            ])
+        conn.commit()
+        print("Database initialized with sample reviews and wallet balance; no guest stories were fabricated.")
+        return
+
     cursor = conn.cursor()
 
     # Seed default user wallet

@@ -1,5 +1,9 @@
 """Community request handlers."""
 from backend.runtime import *
+from datetime import datetime
+from sqlalchemy import case, func, select, update
+from backend.database import lock_transaction, model_to_dict
+from backend.models import Booking, FoodStory, Order, Review, WalletAccount, WalletTransaction
 
 class CommunityHandlers:
     def handle_get_stories(self, query):
@@ -7,9 +11,9 @@ class CommunityHandlers:
         if status_filter != 'approved' and not self._require_role('admin'):
             return
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM food_stories WHERE status = ? ORDER BY created_at DESC", (status_filter,))
-        rows = [dict(r) for r in cursor.fetchall()]
+        rows = [model_to_dict(row) for row in conn.scalars(
+            select(FoodStory).where(FoodStory.status == status_filter).order_by(FoodStory.created_at.desc())
+        )]
         conn.close()
         self._send_json({"success": True, "stories": rows})
 
@@ -45,18 +49,16 @@ class CommunityHandlers:
                 return
 
             conn = get_db()
-            cursor = conn.cursor()
+            lock_transaction(conn)
             if order_id:
-                cursor.execute("SELECT * FROM orders WHERE id = ?", (order_id,))
-                order = cursor.fetchone()
-                if (not order or _normal_phone(order['customer_phone']) != _normal_phone(phone)
-                        or str(order['status']).lower() not in ('delivered', 'completed')
-                        or float(order['subtotal'] or 0) <= 599):
+                order = conn.get(Order, order_id)
+                if (not order or _normal_phone(order.customer_phone) != _normal_phone(phone)
+                        or str(order.status).lower() not in ('delivered', 'completed')
+                        or float(order.subtotal or 0) <= 599):
                     conn.close()
                     self._send_json({"success": False, "error": "Only your completed orders with a food subtotal above ₹599 can be linked."}, 400)
                     return
-                cursor.execute("SELECT id FROM food_stories WHERE order_id = ?", (order_id,))
-                if cursor.fetchone():
+                if conn.scalar(select(FoodStory.id).where(FoodStory.order_id == order_id)):
                     conn.close()
                     self._send_json({"success": False, "error": "This order already has a submitted feedback story."}, 409)
                     return
@@ -69,13 +71,11 @@ class CommunityHandlers:
             with open(os.path.join(upload_dir, filename), 'wb') as media_file:
                 media_file.write(upload['data'])
             media_type = 'video' if upload['content_type'].startswith('video/') else 'image'
-            cursor.execute("""
-                INSERT INTO food_stories
-                  (id, author, phone, dish, dish_id, rating, text, photo, media_type, pts,
-                   order_above_599, order_id, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'pending')
-            """, (story_id, author, phone, dish, dish_id, rating, text, relative_media, media_type,
-                  1 if order_id else 0, order_id))
+            conn.add(FoodStory(
+                id=story_id, author=author, phone=phone, dish=dish, dish_id=dish_id,
+                rating=rating, text=text, photo=relative_media, media_type=media_type,
+                pts=1, order_above_599=1 if order_id else 0, order_id=order_id, status='pending',
+            ))
             conn.commit()
             conn.close()
             self._send_json({"success": True, "story_id": story_id, "pts": 1, "message": "Story submitted for approval"})
@@ -94,26 +94,27 @@ class CommunityHandlers:
             return
 
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("BEGIN IMMEDIATE")
-        cursor.execute("SELECT * FROM food_stories WHERE id = ?", (story_id,))
-        story = cursor.fetchone()
+        lock_transaction(conn)
+        story = conn.scalar(select(FoodStory).where(FoodStory.id == story_id).with_for_update())
         if not story:
             conn.close()
             self._send_json({"error": "Story not found"}, 404)
             return
 
-        if story['status'] != 'pending':
+        if story.status != 'pending':
             conn.close()
             self._send_json({"success": False, "error": "Only pending stories can be approved."}, 409)
             return
-        cursor.execute("UPDATE food_stories SET status = 'approved', pts = 1, story_rewarded = 1 WHERE id = ? AND status = 'pending'", (story_id,))
-        phone = story['phone']
-        cursor.execute("INSERT INTO wallet_accounts (phone, customer_name, balance) VALUES (?, ?, 0) ON CONFLICT (phone) DO NOTHING", (phone, story['author']))
-        cursor.execute("UPDATE wallet_accounts SET balance = balance + 1 WHERE phone = ?", (phone,))
-        cursor.execute("INSERT INTO wallet_transactions (phone, type, amount, label) VALUES (?, 'credit', 1, ?)",
-                       (phone, f"Food Story Approved: {story['dish']}"))
-        bonus = self._award_order_bonus(cursor, story['order_id'])
+        story.status, story.pts, story.story_rewarded = 'approved', 1, 1
+        phone = story.phone
+        wallet = conn.get(WalletAccount, phone)
+        if not wallet:
+            wallet = WalletAccount(phone=phone, customer_name=story.author, balance=0)
+            conn.add(wallet)
+            conn.flush()
+        wallet.balance = int(wallet.balance or 0) + 1
+        conn.add(WalletTransaction(phone=phone, type='credit', amount=1, label=f"Food Story Approved: {story.dish}"))
+        bonus = self._award_order_bonus(conn, story.order_id)
         conn.commit()
         conn.close()
         self._send_json({"success": True, "points_awarded": 1 + bonus, "message": f"Story approved. +1 point{f' and +{bonus} order bonus' if bonus else ''} added to the wallet."})
@@ -127,12 +128,13 @@ class CommunityHandlers:
             self._send_json({"success": False, "error": "Missing story_id"}, 400)
             return
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("UPDATE food_stories SET status = 'rejected' WHERE id = ? AND status = 'pending'", (story_id,))
-        if cursor.rowcount == 0:
+        lock_transaction(conn)
+        story = conn.scalar(select(FoodStory).where(FoodStory.id == story_id).with_for_update())
+        if not story or story.status != 'pending':
             conn.close()
             self._send_json({"success": False, "error": "Only pending stories can be rejected."}, 409)
             return
+        story.status = 'rejected'
         conn.commit()
         conn.close()
         self._send_json({"success": True, "message": "Story rejected."})
@@ -141,40 +143,42 @@ class CommunityHandlers:
         data = self._read_json_body()
         story_id = data.get('story_id')
         conn = get_db()
-        cursor = conn.cursor()
         delta = 1 if data.get('liked') else -1
-        likes_expression = 'GREATEST(0, likes + ?)' if DATABASE_URL else 'MAX(0, likes + ?)'
-        cursor.execute(f"UPDATE food_stories SET likes = {likes_expression} WHERE id = ? AND status = 'approved'", (delta, story_id))
-        if cursor.rowcount == 0:
+        result = conn.execute(update(FoodStory).where(
+            FoodStory.id == story_id, FoodStory.status == 'approved'
+        ).values(likes=case((FoodStory.likes + delta < 0, 0), else_=FoodStory.likes + delta)))
+        if result.rowcount == 0:
             conn.close()
             self._send_json({"success": False, "error": "Approved story not found."}, 404)
             return
-        cursor.execute("SELECT likes FROM food_stories WHERE id = ?", (story_id,))
-        likes = cursor.fetchone()['likes']
+        likes = conn.scalar(select(FoodStory.likes).where(FoodStory.id == story_id))
         conn.commit()
         conn.close()
         self._send_json({"success": True, "likes": likes})
 
     def handle_get_leaderboard(self, query):
         conn = get_db()
-        cursor = conn.cursor()
         def rankings(monthly=False):
-            month_start = "date_trunc('month', CURRENT_TIMESTAMP)" if DATABASE_URL else "date('now', 'start of month')"
-            month_filter = f" AND created_at >= {month_start}" if monthly else ''
-            name_sort = "lower(author) ASC" if DATABASE_URL else "author COLLATE NOCASE ASC"
-            cursor.execute(f"""
-                SELECT author AS name, COUNT(*) AS blogs, SUM(pts) AS points
-                FROM food_stories WHERE status = 'approved'{month_filter}
-                GROUP BY author ORDER BY blogs DESC, points DESC, {name_sort}
-            """)
+            stmt = select(
+                FoodStory.author.label('name'), func.count(FoodStory.id).label('blogs'),
+                func.sum(FoodStory.pts).label('points'),
+            ).where(FoodStory.status == 'approved')
+            if monthly:
+                now = datetime.utcnow()
+                month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                stmt = stmt.where(FoodStory.created_at >= month_start)
+            stmt = stmt.group_by(FoodStory.author).order_by(
+                func.count(FoodStory.id).desc(), func.sum(FoodStory.pts).desc(), func.lower(FoodStory.author).asc()
+            )
             result = []
-            for i, row in enumerate(cursor.fetchall()):
+            for i, row in enumerate(conn.execute(stmt)):
+                row_name = row.name
                 result.append({
                     "rank": i + 1,
-                    "name": row['name'],
-                    "avatar": row['name'][0].upper() if row['name'] else 'F',
-                    "blogs": row['blogs'],
-                    "points": row['points'] or 0,
+                    "name": row_name,
+                    "avatar": row_name[0].upper() if row_name else 'F',
+                    "blogs": row.blogs,
+                    "points": row.points or 0,
                     "badge": '🥇' if i == 0 else '🥈' if i == 1 else '🥉' if i == 2 else ''
                 })
             return result
@@ -186,16 +190,17 @@ class CommunityHandlers:
     def handle_get_wallet(self, query):
         phone = query.get('phone', ['+91 98765 43210'])[0]
         conn = get_db()
-        cursor = conn.cursor()
-        accounts = cursor.execute("SELECT * FROM wallet_accounts").fetchall()
-        acc = next((row for row in accounts if _normal_phone(row['phone']) == _normal_phone(phone)), None)
-        wallet_phone = acc['phone'] if acc else phone
-        cursor.execute("SELECT * FROM wallet_transactions WHERE phone = ? ORDER BY created_at DESC LIMIT 20", (wallet_phone,))
-        txs = [dict(r) for r in cursor.fetchall()]
+        accounts = conn.scalars(select(WalletAccount)).all()
+        acc = next((row for row in accounts if _normal_phone(row.phone) == _normal_phone(phone)), None)
+        wallet_phone = acc.phone if acc else phone
+        txs = [model_to_dict(row) for row in conn.scalars(
+            select(WalletTransaction).where(WalletTransaction.phone == wallet_phone)
+            .order_by(WalletTransaction.created_at.desc()).limit(20)
+        )]
         conn.close()
 
-        balance = acc['balance'] if acc else 0
-        name = acc['customer_name'] if acc else 'Bhadawar Guest'
+        balance = acc.balance if acc else 0
+        name = acc.customer_name if acc else 'Bhadawar Guest'
 
         self._send_json({
             "success": True,
@@ -207,9 +212,7 @@ class CommunityHandlers:
 
     def handle_get_reviews(self):
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM reviews ORDER BY created_at DESC")
-        rows = [dict(r) for r in cursor.fetchall()]
+        rows = [model_to_dict(row) for row in conn.scalars(select(Review).order_by(Review.created_at.desc()))]
         conn.close()
         self._send_json({"success": True, "reviews": rows})
 
@@ -226,8 +229,7 @@ class CommunityHandlers:
             self._send_json({'success': False, 'error': 'Add a name, a rating from 1 to 5, and at least 10 characters of feedback.'}, 400)
             return
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO reviews (name, rating, review_text) VALUES (?, ?, ?)", (name, rating, text))
+        conn.add(Review(name=name, rating=rating, review_text=text))
         conn.commit()
         conn.close()
         self._send_json({"success": True, "message": "Feedback saved for the restaurant team."})
@@ -236,15 +238,10 @@ class CommunityHandlers:
         if not self._require_role('admin'):
             return
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT count(*) FROM orders")
-        orders_count = cursor.fetchone()[0]
-        cursor.execute("SELECT count(*) FROM bookings")
-        bookings_count = cursor.fetchone()[0]
-        cursor.execute("SELECT count(*) FROM food_stories WHERE status = 'approved'")
-        published_stories = cursor.fetchone()[0]
-        cursor.execute("SELECT count(*) FROM food_stories WHERE status = 'pending'")
-        pending_stories = cursor.fetchone()[0]
+        orders_count = conn.scalar(select(func.count(Order.id))) or 0
+        bookings_count = conn.scalar(select(func.count(Booking.id))) or 0
+        published_stories = conn.scalar(select(func.count(FoodStory.id)).where(FoodStory.status == 'approved')) or 0
+        pending_stories = conn.scalar(select(func.count(FoodStory.id)).where(FoodStory.status == 'pending')) or 0
         conn.close()
 
         self._send_json({

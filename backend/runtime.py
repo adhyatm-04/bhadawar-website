@@ -114,6 +114,36 @@ def validate_production_services():
         missing = [name for name, value in (('DATABASE_URL', DATABASE_URL), ('REDIS_URL', REDIS_URL)) if not value]
         if missing:
             raise RuntimeError('Production mode requires configured persistent services: ' + ', '.join(missing))
+        if PUBLIC_PREVIEW_MODE:
+            raise RuntimeError('BHADAWAR_PUBLIC_PREVIEW must be disabled in production.')
+
+        credential_env = {
+            'admin': ('BHADAWAR_ADMIN_USER', 'BHADAWAR_ADMIN_PASSWORD', 'admin', 'BhadawarAdminDemo!'),
+            'kitchen': ('BHADAWAR_KITCHEN_USER', 'BHADAWAR_KITCHEN_PASSWORD', 'kitchen', 'BhadawarKitchenDemo!'),
+            'delivery': ('BHADAWAR_DELIVERY_USER', 'BHADAWAR_DELIVERY_PASSWORD', 'delivery', 'BhadawarDeliveryDemo!'),
+        }
+        insecure = []
+        production_usernames = []
+        production_passwords = []
+        for role, (user_key, password_key, default_user, default_password) in credential_env.items():
+            username, password = DEMO_STAFF[role]
+            production_usernames.append(username.casefold())
+            production_passwords.append(password)
+            if (not username or username == default_user or not password or password == default_password
+                    or len(password) < 12):
+                insecure.extend((user_key, password_key))
+        if insecure:
+            names = ', '.join(dict.fromkeys(insecure))
+            raise RuntimeError('Production mode requires unique staff usernames and passwords of at least 12 characters: ' + names)
+        if len(set(production_usernames)) != len(production_usernames):
+            raise RuntimeError('Production admin, kitchen, and delivery usernames must be different.')
+        if len(set(production_passwords)) != len(production_passwords):
+            raise RuntimeError('Production admin, kitchen, and delivery passwords must be different.')
+
+        if (CORPORATE_COMPANY.casefold() == 'bhadawar demo company'
+                or not CORPORATE_STAFF_IDS
+                or CORPORATE_STAFF_IDS == {'corp-1001'}):
+            raise RuntimeError('Production mode requires configured corporate access: BHADAWAR_CORPORATE_COMPANY and BHADAWAR_CORPORATE_STAFF_IDS.')
 
 
 def is_integrity_error(error):
@@ -135,24 +165,23 @@ def _ensure_postgres_schema():
 def get_db():
     if DATABASE_URL:
         _ensure_postgres_schema()
-        from backend.database import connect_database
-        return connect_database()
+        from backend.database import connect_session
+        return connect_session()
 
     global _SQLITE_SCHEMA_READY
-    conn = sqlite3.connect(DB_PATH, timeout=30)
-    conn.row_factory = sqlite3.Row
-    conn.execute('PRAGMA busy_timeout = 30000')
-    conn.execute('PRAGMA journal_mode = WAL')
     with _DATABASE_SCHEMA_LOCK:
         if not _SQLITE_SCHEMA_READY:
+            conn = sqlite3.connect(DB_PATH, timeout=30)
             tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
             if 'orders' not in tables:
                 from backend_db import init_db
                 bootstrap = init_db()
                 bootstrap.close()
             _migrate_db(conn)
+            conn.close()
             _SQLITE_SCHEMA_READY = True
-    return conn
+    from backend.database import connect_session
+    return connect_session()
 
 def _migrate_db(conn):
     conn.execute("""CREATE TABLE IF NOT EXISTS customer_accounts (

@@ -1,18 +1,19 @@
-"""SQLAlchemy-backed PostgreSQL connection and migration helpers."""
+"""SQLAlchemy engine, session, model serialization, and migration helpers."""
 from __future__ import annotations
 
 import os
 import threading
-from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, func, select
+from sqlalchemy.orm import Session, sessionmaker
 
 
 ROOT = Path(__file__).resolve().parents[1]
 _engine = None
 _engine_lock = threading.Lock()
+_session_factory = None
 
 
 def _database_url() -> str:
@@ -20,171 +21,66 @@ def _database_url() -> str:
     if not url:
         raise RuntimeError("DATABASE_URL is required for PostgreSQL mode.")
     if url.startswith("postgres://"):
-        url = "postgresql+psycopg://" + url[len("postgres://"):]
-    elif url.startswith("postgresql://"):
-        url = "postgresql+psycopg://" + url[len("postgresql://"):]
+        return "postgresql+psycopg://" + url[len("postgres://"):]
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + url[len("postgresql://"):]
     return url
 
 
 def get_engine():
-    global _engine
-    url = _database_url()
+    """Return the shared PostgreSQL or local SQLite SQLAlchemy engine."""
+    global _engine, _session_factory
+    database_url = os.environ.get("DATABASE_URL", "").strip()
+    if database_url:
+        url = _database_url()
+    else:
+        path = Path(os.environ.get("BHADAWAR_DB_PATH", str(ROOT / "bhadawar.db"))).resolve()
+        url = "sqlite:///" + path.as_posix()
+
     with _engine_lock:
         if _engine is None:
-            _engine = create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=5)
+            if url.startswith("sqlite:"):
+                _engine = create_engine(url, connect_args={"check_same_thread": False, "timeout": 30})
+
+                @event.listens_for(_engine, "connect")
+                def _configure_sqlite(dbapi_connection, _connection_record):
+                    cursor = dbapi_connection.cursor()
+                    cursor.execute("PRAGMA foreign_keys = ON")
+                    cursor.execute("PRAGMA busy_timeout = 30000")
+                    cursor.execute("PRAGMA journal_mode = WAL")
+                    cursor.close()
+            else:
+                _engine = create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=5)
+            _session_factory = sessionmaker(bind=_engine, class_=Session, expire_on_commit=False)
         return _engine
 
 
-def _named_parameters(sql: str, parameters=()):
-    """Translate the existing qmark SQL to SQLAlchemy text bind parameters."""
-    values = parameters or ()
-    if isinstance(values, Mapping):
-        return sql, dict(values)
-    bind_names = []
-    output = []
-    quote = None
-    i = 0
-    while i < len(sql):
-        char = sql[i]
-        if quote:
-            output.append(char)
-            if char == quote:
-                if i + 1 < len(sql) and sql[i + 1] == quote:
-                    output.append(sql[i + 1])
-                    i += 1
-                else:
-                    quote = None
-        elif char in ("'", '"'):
-            quote = char
-            output.append(char)
-        elif char == "?":
-            name = f"p{len(bind_names)}"
-            bind_names.append(name)
-            output.append(f":{name}")
-        else:
-            output.append(char)
-        i += 1
-    if len(bind_names) != len(values):
-        if not bind_names and not values:
-            return sql, {}
-        raise ValueError(f"SQL placeholder count {len(bind_names)} does not match parameter count {len(values)}.")
-    return "".join(output), dict(zip(bind_names, values))
+def connect_session() -> Session:
+    get_engine()
+    return _session_factory()
 
 
-class HybridRow(Mapping):
-    """A result row that preserves sqlite3.Row string and numeric indexing."""
-
-    def __init__(self, names, values):
-        self._names = tuple(names)
-        self._values = tuple(
-            value.isoformat(sep=" ", timespec="seconds") if isinstance(value, datetime) else value
-            for value in values
-        )
-        self._mapping = dict(zip(self._names, self._values))
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return self._values[key]
-        return self._mapping[key]
-
-    def __iter__(self):
-        return iter(self._names)
-
-    def __len__(self):
-        return len(self._names)
-
-    def keys(self):
-        return self._names
+def lock_transaction(session: Session) -> None:
+    """Serialize multi-row writes while domain workflows gain narrower locks."""
+    if os.environ.get("DATABASE_URL", "").strip():
+        session.execute(select(func.pg_advisory_xact_lock(736491020261009)))
+    else:
+        session.connection().exec_driver_sql("BEGIN IMMEDIATE")
 
 
-class CursorAdapter:
-    def __init__(self, connection):
-        self.connection = connection
-        self.result = None
-        self.columns = ()
-
-    def execute(self, sql, parameters=()):
-        raw_sql = str(sql).strip()
-        if raw_sql.upper() == "BEGIN IMMEDIATE":
-            # SQLite used this to reserve the writer lock before order, rider,
-            # and payment state transitions. A transaction-scoped advisory lock
-            # preserves that serialization on PostgreSQL until those operations
-            # use narrower row locks.
-            result = self.connection.execute(text("SELECT pg_advisory_xact_lock(736491020261009)"))
-            result.close()
-            self.result = None
-            self.columns = ()
-            return self
-        sql, values = _named_parameters(raw_sql, parameters)
-        self.result = self.connection.execute(text(sql), values)
-        self.columns = tuple(self.result.keys())
-        return self
-
-    def executemany(self, sql, parameters):
-        rows = list(parameters)
-        if not rows:
-            return self.execute(sql, ())
-        first = rows[0]
-        values_for_template = tuple(None for _ in first) if not isinstance(first, Mapping) else first
-        sql, _ = _named_parameters(str(sql), values_for_template)
-        batch = []
-        for values in rows:
-            if isinstance(values, Mapping):
-                batch.append(dict(values))
-            else:
-                if len(values) != len(values_for_template):
-                    raise ValueError("SQL placeholder count does not match executemany parameter count.")
-                batch.append({f"p{i}": value for i, value in enumerate(values)})
-        self.result = self.connection.execute(text(sql), batch)
-        self.columns = tuple(self.result.keys())
-        return self
-
-    def _row(self, row):
-        return HybridRow(self.columns, row) if row is not None else None
-
-    def fetchone(self):
-        return self._row(self.result.fetchone()) if self.result is not None else None
-
-    def fetchall(self):
-        return [self._row(row) for row in self.result.fetchall()] if self.result is not None else []
-
-    @property
-    def rowcount(self):
-        return self.result.rowcount if self.result is not None else -1
-
-    @property
-    def lastrowid(self):
+def model_to_dict(record):
+    """Convert an ORM model to the JSON field shape used by the browser UI."""
+    if record is None:
         return None
+    from sqlalchemy import inspect
 
-    def close(self):
-        if self.result is not None:
-            self.result.close()
-
-
-class ConnectionAdapter:
-    def __init__(self):
-        self.connection = get_engine().connect()
-
-    def execute(self, sql, parameters=()):
-        return CursorAdapter(self.connection).execute(sql, parameters)
-
-    def cursor(self):
-        return CursorAdapter(self.connection)
-
-    def commit(self):
-        if self.connection.in_transaction():
-            self.connection.commit()
-
-    def rollback(self):
-        if self.connection.in_transaction():
-            self.connection.rollback()
-
-    def close(self):
-        self.connection.close()
-
-
-def connect_database():
-    return ConnectionAdapter()
+    values = {}
+    for attribute in inspect(record).mapper.column_attrs:
+        value = getattr(record, attribute.key)
+        if isinstance(value, datetime):
+            value = value.isoformat(sep=" ", timespec="seconds")
+        values[attribute.key] = value
+    return values
 
 
 def upgrade_schema():

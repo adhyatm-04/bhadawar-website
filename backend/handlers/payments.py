@@ -1,5 +1,8 @@
 """Payments request handlers."""
 from backend.runtime import *
+from sqlalchemy import select
+from backend.database import lock_transaction, model_to_dict
+from backend.models import Booking
 
 class PaymentsHandlers:
     def _razorpay_call(self, method, path, payload=None):
@@ -37,13 +40,12 @@ class PaymentsHandlers:
             booking_id = f"BK{uuid.uuid4().hex[:10].upper()}"
             deposit = party_deposit_for_guests(guests) if booking_type == 'party' else guests * 50
             conn = get_db()
-            cursor = conn.cursor()
-            cursor.execute("""INSERT INTO bookings
-                (id, booking_type, customer_name, customer_phone, booking_date, booking_time, guest_count, notes,
-                 status, deposit_amount, payment_status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'payment_pending', ?, 'pending')""",
-                (booking_id, booking_type, name, phone, date, time, guests,
-                 'Dine-in table reservation' if booking_type == 'dine' else 'Parties & Gatherings', deposit))
+            conn.add(Booking(
+                id=booking_id, booking_type=booking_type, customer_name=name, customer_phone=phone,
+                booking_date=date, booking_time=time, guest_count=guests,
+                notes='Dine-in table reservation' if booking_type == 'dine' else 'Parties & Gatherings',
+                status='payment_pending', deposit_amount=deposit, payment_status='pending',
+            ))
             conn.commit()
             conn.close()
             try:
@@ -53,12 +55,17 @@ class PaymentsHandlers:
                 })
             except Exception:
                 conn = get_db()
-                conn.execute("UPDATE bookings SET status = 'payment_failed', payment_status = 'failed' WHERE id = ?", (booking_id,))
+                booking = conn.get(Booking, booking_id)
+                if booking:
+                    booking.status = 'payment_failed'
+                    booking.payment_status = 'failed'
                 conn.commit()
                 conn.close()
                 raise
             conn = get_db()
-            conn.execute('UPDATE bookings SET razorpay_order_id = ? WHERE id = ?', (order['id'], booking_id))
+            booking = conn.get(Booking, booking_id)
+            if booking:
+                booking.razorpay_order_id = order['id']
             conn.commit()
             conn.close()
             self._send_json({'success': True, 'booking_id': booking_id, 'amount': deposit * 100,
@@ -73,18 +80,18 @@ class PaymentsHandlers:
         if not all((RAZORPAY_KEY_SECRET, booking_id, payment_id, order_id, signature)):
             return False, 'Payment verification details are incomplete.'
         conn = get_db()
-        row = conn.execute("SELECT * FROM bookings WHERE id = ? AND booking_type IN ('party', 'dine')", (booking_id,)).fetchone()
-        if not row:
+        booking = conn.get(Booking, booking_id)
+        if not booking or booking.booking_type not in ('party', 'dine'):
             conn.close()
             return False, 'Booking was not found.'
         expected = hmac.new(RAZORPAY_KEY_SECRET.encode(), f'{order_id}|{payment_id}'.encode(), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(expected, signature):
             conn.close()
             return False, 'Payment signature could not be verified.'
-        if row['payment_status'] == 'paid':
+        if booking.payment_status == 'paid':
             conn.close()
-            return (row['razorpay_payment_id'] == payment_id), 'This booking payment was already confirmed.'
-        if row['razorpay_order_id'] != order_id:
+            return (booking.razorpay_payment_id == payment_id), 'This booking payment was already confirmed.'
+        if booking.razorpay_order_id != order_id:
             conn.close()
             return False, 'Payment does not match this booking.'
         try:
@@ -92,12 +99,13 @@ class PaymentsHandlers:
         except Exception as error:
             conn.close()
             return False, f'Could not confirm payment status: {error}'
-        expected_paise = int(round(float(row['deposit_amount']) * 100))
+        expected_paise = int(round(float(booking.deposit_amount) * 100))
         if payment.get('order_id') != order_id or payment.get('currency') != 'INR' or int(payment.get('amount', 0)) != expected_paise or payment.get('status') != 'captured':
             conn.close()
             return False, 'Payment is not captured for the correct booking amount.'
-        conn.execute("""UPDATE bookings SET payment_status = 'paid', status = 'confirmed', razorpay_payment_id = ?
-                     WHERE id = ? AND payment_status = 'pending'""", (payment_id, booking_id))
+        booking.payment_status = 'paid'
+        booking.status = 'confirmed'
+        booking.razorpay_payment_id = payment_id
         conn.commit()
         conn.close()
         return True, 'Booking confirmed and advance recorded.'
@@ -127,18 +135,27 @@ class PaymentsHandlers:
                 payment_id = entity.get('id') if entity.get('order_id') else ''
                 if order_id and payment_id:
                     conn = get_db()
-                    row = conn.execute('SELECT id FROM bookings WHERE razorpay_order_id = ? AND payment_status = \'pending\'', (order_id,)).fetchone()
+                    row = conn.scalar(select(Booking.id).where(
+                        Booking.razorpay_order_id == order_id, Booking.payment_status == 'pending'
+                    ))
                     conn.close()
                     if row:
                         # Reuse the provider API fetch and amount checks before confirming.
                         conn = get_db()
-                        booking = conn.execute('SELECT * FROM bookings WHERE id = ?', (row['id'],)).fetchone()
+                        booking = conn.get(Booking, row)
+                        booking_data = model_to_dict(booking) if booking else None
                         conn.close()
                         # Webhooks use their own signature; verify the fetched payment and stored order instead.
                         payment = self._razorpay_call('GET', f'payments/{urllib.parse.quote(payment_id)}')
-                        if payment.get('order_id') == order_id and payment.get('currency') == 'INR' and int(payment.get('amount', 0)) == int(round(float(booking['deposit_amount']) * 100)) and payment.get('status') == 'captured':
+                        if (booking_data and payment.get('order_id') == order_id and payment.get('currency') == 'INR'
+                                and int(payment.get('amount', 0)) == int(round(float(booking_data['deposit_amount']) * 100))
+                                and payment.get('status') == 'captured'):
                             conn = get_db()
-                            conn.execute("UPDATE bookings SET payment_status = 'paid', status = 'confirmed', razorpay_payment_id = ? WHERE id = ? AND payment_status = 'pending'", (payment_id, row['id']))
+                            booking = conn.get(Booking, row)
+                            if booking and booking.payment_status == 'pending':
+                                booking.payment_status = 'paid'
+                                booking.status = 'confirmed'
+                                booking.razorpay_payment_id = payment_id
                             conn.commit()
                             conn.close()
             self._send_json({'success': True})
@@ -158,26 +175,29 @@ class PaymentsHandlers:
             self._send_json({'success': False, 'error': 'Enter a valid final bill amount.'}, 400)
             return
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('BEGIN IMMEDIATE')
-        booking = cursor.execute("SELECT * FROM bookings WHERE id = ? AND booking_type = 'party'", (booking_id,)).fetchone()
+        lock_transaction(conn)
+        booking = conn.scalar(select(Booking).where(
+            Booking.id == booking_id, Booking.booking_type == 'party'
+        ).with_for_update())
         if not booking:
             conn.close()
             self._send_json({'success': False, 'error': 'Party booking was not found.'}, 404)
             return
-        if booking['payment_status'] != 'paid':
+        if booking.payment_status != 'paid':
             conn.close()
             self._send_json({'success': False, 'error': 'Only a paid party booking can be settled.'}, 409)
             return
-        if booking['final_bill'] is not None:
+        if booking.final_bill is not None:
             conn.close()
             self._send_json({'success': False, 'error': 'This booking has already been settled.'}, 409)
             return
-        deposit = float(booking['deposit_amount'] or 0)
+        deposit = float(booking.deposit_amount or 0)
         due = max(0, round(final_bill - deposit, 2))
         refund = max(0, round(deposit - final_bill, 2))
-        cursor.execute("UPDATE bookings SET final_bill = ?, balance_due = ?, refund_due = ?, settled_at = ? WHERE id = ? AND final_bill IS NULL",
-                       (final_bill, due, refund, datetime.utcnow().isoformat(timespec='seconds') + 'Z', booking_id))
+        booking.final_bill = final_bill
+        booking.balance_due = due
+        booking.refund_due = refund
+        booking.settled_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
         conn.commit()
         conn.close()
         self._send_json({'success': True, 'final_bill': final_bill, 'deposit_credit': deposit, 'balance_due': due,

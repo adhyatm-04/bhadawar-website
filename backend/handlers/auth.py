@@ -1,5 +1,8 @@
 """Auth request handlers."""
 from backend.runtime import *
+from sqlalchemy import func, select, update
+from backend.database import lock_transaction, model_to_dict
+from backend.models import CustomerAccount, DeliveryRider, Order
 
 class AuthHandlers:
     def _staff(self):
@@ -35,19 +38,23 @@ class AuthHandlers:
             CUSTOMER_SESSIONS.pop(token, None)
             return None
         conn = get_db()
-        row = conn.execute('SELECT phone, name, email, phone_verified_at, email_verified_at FROM customer_accounts WHERE phone = ?', (session['phone'],)).fetchone()
+        row = conn.get(CustomerAccount, session['phone'])
         conn.close()
         if not row:
             CUSTOMER_SESSIONS.pop(token, None)
             return None
-        return dict(row)
+        return model_to_dict(row)
 
     def _customer_cookie(self, token, max_age):
-        secure = self.headers.get('X-Forwarded-Proto', '').lower() == 'https'
-        origin = urllib.parse.urlparse(self.headers.get('Origin', ''))
-        secure = secure or origin.scheme == 'https'
-        suffix = '; Secure' if secure else ''
+        suffix = self._secure_cookie_attribute()
         return f'bhadawar_customer={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={max_age}{suffix}'
+
+    def _secure_cookie_attribute(self):
+        secure = self.headers.get('X-Forwarded-Proto', '').split(',', 1)[0].strip().lower() == 'https'
+        if not secure:
+            origin = urllib.parse.urlparse(self.headers.get('Origin', ''))
+            secure = origin.scheme == 'https'
+        return '; Secure' if secure else ''
 
     def _require_role(self, *roles):
         staff = self._staff()
@@ -66,9 +73,9 @@ class AuthHandlers:
             'expires': datetime.utcnow().timestamp() + CUSTOMER_SESSION_MAX_AGE,
         }
         conn = get_db()
-        account = conn.execute('SELECT phone, name, email, phone_verified_at, email_verified_at FROM customer_accounts WHERE phone = ?', (phone,)).fetchone()
+        account = conn.get(CustomerAccount, phone)
         conn.close()
-        self._send_json({'success': True, 'customer': dict(account) if account else None}, extra_headers={
+        self._send_json({'success': True, 'customer': model_to_dict(account)}, extra_headers={
             'Set-Cookie': self._customer_cookie(token, CUSTOMER_SESSION_MAX_AGE),
             'Cache-Control': 'no-store',
         })
@@ -161,10 +168,14 @@ class AuthHandlers:
         verified_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
         conn = get_db()
         try:
-            conn.execute('BEGIN IMMEDIATE')
-            account = conn.execute('SELECT phone FROM customer_accounts WHERE phone = ?', (phone,)).fetchone()
+            lock_transaction(conn)
+            account = conn.scalar(select(CustomerAccount).where(
+                CustomerAccount.phone == phone
+            ).with_for_update())
             if purpose == 'register':
-                if email and conn.execute('SELECT 1 FROM customer_accounts WHERE lower(email) = ? LIMIT 1', (email,)).fetchone():
+                if email and conn.scalar(select(CustomerAccount.phone).where(
+                    func.lower(CustomerAccount.email) == email
+                ).limit(1)):
                     conn.rollback()
                     conn.close()
                     self._send_json({'success': False, 'error': 'This email is already linked to another account.'}, 409,
@@ -179,9 +190,10 @@ class AuthHandlers:
                 salt = secrets.token_bytes(16)
                 random_password = secrets.token_bytes(32)
                 password_hash = hashlib.pbkdf2_hmac('sha256', random_password, salt, 260_000).hex()
-                conn.execute('''INSERT INTO customer_accounts
-                    (phone, name, email, password_salt, password_hash, phone_verified_at)
-                    VALUES (?, ?, ?, ?, ?, ?)''', (phone, name, email, salt.hex(), password_hash, verified_at))
+                conn.add(CustomerAccount(
+                    phone=phone, name=name, email=email, password_salt=salt.hex(),
+                    password_hash=password_hash, phone_verified_at=verified_at,
+                ))
             else:
                 if not account:
                     conn.rollback()
@@ -189,8 +201,8 @@ class AuthHandlers:
                     self._send_json({'success': False, 'error': 'No account uses this number yet. Create an account first.'}, 404,
                                     extra_headers={'Cache-Control': 'no-store'})
                     return
-                conn.execute('UPDATE customer_accounts SET phone_verified_at = COALESCE(phone_verified_at, ?) WHERE phone = ?',
-                             (verified_at, phone))
+                if not account.phone_verified_at:
+                    account.phone_verified_at = verified_at
             conn.commit()
         except Exception as error:
             if not is_integrity_error(error):
@@ -202,12 +214,6 @@ class AuthHandlers:
             conn.rollback()
             conn.close()
             self._send_json({'success': False, 'error': 'An account already uses this number. Choose Sign in instead.'}, 409,
-                            extra_headers={'Cache-Control': 'no-store'})
-            return
-        except Exception:
-            conn.rollback()
-            conn.close()
-            self._send_json({'success': False, 'error': 'Could not finish sign-in. Please try again.'}, 500,
                             extra_headers={'Cache-Control': 'no-store'})
             return
         conn.close()
@@ -233,10 +239,8 @@ class AuthHandlers:
         password_hash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 260_000).hex()
         conn = get_db()
         try:
-            conn.execute(
-                'INSERT INTO customer_accounts (phone, name, email, password_salt, password_hash) VALUES (?, ?, ?, ?, ?)',
-                (phone, name, email, salt.hex(), password_hash),
-            )
+            conn.add(CustomerAccount(phone=phone, name=name, email=email,
+                                     password_salt=salt.hex(), password_hash=password_hash))
             conn.commit()
         except Exception as error:
             if not is_integrity_error(error):
@@ -245,10 +249,6 @@ class AuthHandlers:
                 return
             conn.close()
             self._send_json({'success': False, 'error': 'An account already uses this phone number. Sign in instead.'}, 409)
-            return
-        except Exception:
-            conn.close()
-            self._send_json({'success': False, 'error': 'Your account could not be created. Please try again.'}, 500)
             return
         conn.close()
         self._start_customer_session(phone)
@@ -261,13 +261,13 @@ class AuthHandlers:
             self._send_json({'success': False, 'error': 'Enter your registered mobile number and password.'}, 400)
             return
         conn = get_db()
-        row = conn.execute('SELECT phone, password_salt, password_hash FROM customer_accounts WHERE phone = ?', (phone,)).fetchone()
+        row = conn.get(CustomerAccount, phone)
         conn.close()
         valid = False
         if row:
             try:
-                actual = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), bytes.fromhex(row['password_salt']), 260_000).hex()
-                valid = hmac.compare_digest(actual, row['password_hash'])
+                actual = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), bytes.fromhex(row.password_salt), 260_000).hex()
+                valid = hmac.compare_digest(actual, row.password_hash)
             except (ValueError, TypeError):
                 valid = False
         if not valid:
@@ -290,15 +290,21 @@ class AuthHandlers:
             self._send_json({'success': False, 'error': 'Enter a valid email address or leave it blank.'}, 400)
             return
         conn = get_db()
-        if email and conn.execute('SELECT 1 FROM customer_accounts WHERE lower(email) = ? AND phone != ? LIMIT 1',
-                                  (email, customer['phone'])).fetchone():
+        lock_transaction(conn)
+        if email and conn.scalar(select(CustomerAccount.phone).where(
+            func.lower(CustomerAccount.email) == email, CustomerAccount.phone != customer['phone']
+        ).limit(1)):
             conn.close()
             self._send_json({'success': False, 'error': 'This email is already linked to another account.'}, 409,
                             extra_headers={'Cache-Control': 'no-store'})
             return
         email_verified_at = customer.get('email_verified_at') if email == customer.get('email') else None
-        conn.execute('UPDATE customer_accounts SET name = ?, email = ?, email_verified_at = ? WHERE phone = ?',
-                     (name, email, email_verified_at, customer['phone']))
+        account = conn.get(CustomerAccount, customer['phone'])
+        if not account:
+            conn.close()
+            self._send_json({'success': False, 'error': 'Customer account not found.'}, 404)
+            return
+        account.name, account.email, account.email_verified_at = name, email, email_verified_at
         conn.commit()
         conn.close()
         self._send_json({'success': True, 'customer': {
@@ -389,9 +395,12 @@ class AuthHandlers:
             return
         verified_at = datetime.utcnow().isoformat(timespec='seconds') + 'Z'
         conn = get_db()
-        cursor = conn.execute('UPDATE customer_accounts SET email_verified_at = ? WHERE phone = ? AND email = ?',
-                              (verified_at, phone, challenge['email']))
-        updated = cursor.rowcount == 1
+        account = conn.scalar(select(CustomerAccount).where(
+            CustomerAccount.phone == phone, CustomerAccount.email == challenge['email']
+        ).with_for_update())
+        updated = account is not None
+        if account:
+            account.email_verified_at = verified_at
         conn.commit()
         conn.close()
         CUSTOMER_EMAIL_OTP_CHALLENGES.pop(phone, None)
@@ -422,8 +431,9 @@ class AuthHandlers:
                             extra_headers={'Retry-After': str(retry), 'Cache-Control': 'no-store'})
             return
         conn = get_db()
-        accounts = conn.execute('SELECT phone FROM customer_accounts WHERE lower(email) = ? AND email_verified_at IS NOT NULL LIMIT 2',
-                                (email,)).fetchall()
+        accounts = conn.scalars(select(CustomerAccount.phone).where(
+            func.lower(CustomerAccount.email) == email, CustomerAccount.email_verified_at.is_not(None)
+        ).limit(2)).all()
         conn.close()
         if len(accounts) != 1:
             self._send_json({'success': True, 'message': 'If a verified account uses this email, a sign-in code has been sent.'},
@@ -440,7 +450,7 @@ class AuthHandlers:
             return
         CUSTOMER_EMAIL_LOGIN_CHALLENGES[email_key] = {
             'email': email,
-            'phone': accounts[0]['phone'],
+            'phone': accounts[0],
             'salt': salt.hex(),
             'code_hash': code_hash,
             'expires': time.time() + 10 * 60,
@@ -480,15 +490,17 @@ class AuthHandlers:
                             extra_headers={'Cache-Control': 'no-store'})
             return
         conn = get_db()
-        account = conn.execute('SELECT phone FROM customer_accounts WHERE phone = ? AND lower(email) = ? AND email_verified_at IS NOT NULL',
-                               (challenge['phone'], email)).fetchone()
+        account = conn.scalar(select(CustomerAccount).where(
+            CustomerAccount.phone == challenge['phone'], func.lower(CustomerAccount.email) == email,
+            CustomerAccount.email_verified_at.is_not(None),
+        ))
         conn.close()
         CUSTOMER_EMAIL_LOGIN_CHALLENGES.pop(email_key, None)
         if not account:
             self._send_json({'success': False, 'error': 'This email is no longer verified on the account. Sign in by SMS to verify it again.'}, 409,
                             extra_headers={'Cache-Control': 'no-store'})
             return
-        self._start_customer_session(account['phone'])
+        self._start_customer_session(account.phone)
 
     def handle_customer_logout(self):
         token = ''
@@ -519,7 +531,7 @@ class AuthHandlers:
         token = secrets.token_urlsafe(32)
         STAFF_SESSIONS[token] = {'role': role, 'username': username, 'expires': datetime.utcnow().timestamp() + SESSION_MAX_AGE}
         self._send_json({'success': True, 'staff': {'role': role, 'username': username}}, extra_headers={
-            'Set-Cookie': f'bhadawar_staff={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={SESSION_MAX_AGE}'
+            'Set-Cookie': f'bhadawar_staff={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={SESSION_MAX_AGE}{self._secure_cookie_attribute()}'
         })
 
     def handle_corporate_login(self):
@@ -537,7 +549,7 @@ class AuthHandlers:
             'expires': datetime.utcnow().timestamp() + SESSION_MAX_AGE
         }
         self._send_json({'success': True, 'staff': {'role': 'corporate', 'username': staff_id, 'company': CORPORATE_COMPANY}}, extra_headers={
-            'Set-Cookie': f'bhadawar_staff={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={SESSION_MAX_AGE}'
+            'Set-Cookie': f'bhadawar_staff={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={SESSION_MAX_AGE}{self._secure_cookie_attribute()}'
         })
 
     def handle_staff_logout(self):
@@ -547,12 +559,18 @@ class AuthHandlers:
         session = STAFF_SESSIONS.get(token)
         if session and session.get('role') == 'delivery':
             conn = get_db()
-            cursor = conn.cursor()
-            cursor.execute('BEGIN IMMEDIATE')
-            cursor.execute('UPDATE delivery_riders SET is_available = 0, updated_at = CURRENT_TIMESTAMP WHERE username = ?', (session['username'],))
-            cursor.execute("UPDATE orders SET delivery_rider = NULL WHERE delivery_rider = ? AND status = 'ready_for_pickup'", (session['username'],))
-            self._assign_waiting_delivery_orders(cursor)
+            lock_transaction(conn)
+            rider = conn.get(DeliveryRider, session['username'])
+            if rider:
+                rider.is_available = 0
+                rider.updated_at = datetime.utcnow()
+            conn.execute(update(Order).where(
+                Order.delivery_rider == session['username'], Order.status == 'ready_for_pickup'
+            ).values(delivery_rider=None))
+            self._assign_waiting_delivery_orders(conn)
             conn.commit()
             conn.close()
         STAFF_SESSIONS.pop(token, None)
-        self._send_json({'success': True}, extra_headers={'Set-Cookie': 'bhadawar_staff=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0'})
+        self._send_json({'success': True}, extra_headers={
+            'Set-Cookie': f'bhadawar_staff=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0{self._secure_cookie_attribute()}'
+        })

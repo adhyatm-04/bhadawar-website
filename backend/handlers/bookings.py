@@ -1,14 +1,17 @@
 """Bookings request handlers."""
 from backend.runtime import *
+from sqlalchemy import select
+from backend.database import model_to_dict
+from backend.models import Booking
 
 class BookingsHandlers:
     def handle_get_bookings(self, query):
         if not self._require_role('admin'):
             return
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM bookings ORDER BY created_at DESC LIMIT 50")
-        rows = [dict(r) for r in cursor.fetchall()]
+        rows = [model_to_dict(row) for row in conn.scalars(
+            select(Booking).order_by(Booking.created_at.desc()).limit(50)
+        )]
         conn.close()
         self._send_json({"success": True, "bookings": rows})
 
@@ -27,11 +30,11 @@ class BookingsHandlers:
         notes = data.get('notes', '')
 
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("""
-        INSERT INTO bookings (id, booking_type, customer_name, customer_phone, booking_date, booking_time, guest_count, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (booking_id, booking_type, name, phone, date, time, guests, notes))
+        conn.add(Booking(
+            id=booking_id, booking_type=booking_type, customer_name=name,
+            customer_phone=phone, booking_date=date, booking_time=time,
+            guest_count=guests, notes=notes,
+        ))
         conn.commit()
         conn.close()
         self._send_json({"success": True, "booking_id": booking_id, "message": "Reservation saved"})
