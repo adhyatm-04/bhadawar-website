@@ -9,31 +9,31 @@ export function createApiModule({ baseUrl, getData, getDefaultData, renderers })
     }
   }
 
-  function reportFailure(endpoint, status, message) {
+  function reportFailure(endpoint, status, message, { notifyUnavailable = true } = {}) {
     const unavailable = status === 0 || status === 404 || status >= 500;
     const detail = { endpoint, httpStatus: status, error: message, unavailable };
     console.warn(`[Bhadawar API] ${endpoint}: ${status ? `HTTP ${status}` : 'network error'} — ${message}`);
-    if (unavailable && typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') {
+    if (unavailable && notifyUnavailable && typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bhadawar:api-error', { detail }));
     }
     return { success: false, ...detail };
   }
 
-  async function request(endpoint, options) {
+  async function request(endpoint, options, failureOptions) {
     let response;
     try {
       response = await fetch(`${baseUrl}/${endpoint}`, options);
     } catch {
-      return reportFailure(endpoint, 0, 'Could not reach the backend.');
+      return reportFailure(endpoint, 0, 'Could not reach the backend.', failureOptions);
     }
 
     const body = readResponseBody(await response.text());
     if (!response.ok) {
       const message = body?.error || body?.message || `Request failed (${response.status} ${response.statusText || 'HTTP error'}).`;
-      return reportFailure(endpoint, response.status, String(message));
+      return reportFailure(endpoint, response.status, String(message), failureOptions);
     }
     if (body?.__nonJson) {
-      return reportFailure(endpoint, response.status, 'The API route returned a non-JSON response.');
+      return reportFailure(endpoint, response.status, 'The API route returned a non-JSON response.', failureOptions);
     }
     if (body?.error && body?.success === false) {
       return { ...body, httpStatus: response.status };
@@ -42,8 +42,8 @@ export function createApiModule({ baseUrl, getData, getDefaultData, renderers })
   }
 
   const API = {
-    async get(endpoint) {
-      return request(endpoint, { credentials: 'same-origin' });
+    async get(endpoint, { notifyUnavailable = true } = {}) {
+      return request(endpoint, { credentials: 'same-origin' }, { notifyUnavailable });
     },
     async post(endpoint, payload) {
       return request(endpoint, {
@@ -67,11 +67,13 @@ export function createApiModule({ baseUrl, getData, getDefaultData, renderers })
   async function syncFromBackend() {
     const data = getData();
     if (document.body.dataset.page === 'team') {
-      const ordersResponse = await API.get('orders');
+      const ordersResponse = await API.get('orders', { notifyUnavailable: false });
       if (ordersResponse?.success) data.orders = ordersResponse.orders || [];
     }
 
-    const storiesResponse = await API.get('food-stories');
+    // These are optional homepage/feed reads with built-in local fallbacks. Keep transient
+    // backend outages from covering the menu with a toast during initial page load.
+    const storiesResponse = await API.get('food-stories', { notifyUnavailable: false });
     if (storiesResponse?.success && storiesResponse.stories) {
       const approvedStories = storiesResponse.stories.map(story => ({
         ...story,
@@ -84,7 +86,7 @@ export function createApiModule({ baseUrl, getData, getDefaultData, renderers })
         dishId: story.dish_id
       }));
       if (document.body.dataset.page === 'team') {
-        const pendingResponse = await API.get('food-stories?status=pending');
+        const pendingResponse = await API.get('food-stories?status=pending', { notifyUnavailable: false });
         const pendingStories = (pendingResponse?.stories || []).map(story => ({
           ...story,
           date: story.created_at || story.date,
@@ -103,7 +105,7 @@ export function createApiModule({ baseUrl, getData, getDefaultData, renderers })
       renderers.renderFoodStories();
     }
 
-    const leaderboardResponse = await API.get('leaderboard');
+    const leaderboardResponse = await API.get('leaderboard', { notifyUnavailable: false });
     if (leaderboardResponse?.success) {
       data.leaderboard = {
         alltime: leaderboardResponse.alltime || [],
@@ -114,7 +116,7 @@ export function createApiModule({ baseUrl, getData, getDefaultData, renderers })
     }
 
     if (data.customerProfile?.phone) {
-      const walletResponse = await API.get(`wallet?phone=${encodeURIComponent(data.customerProfile.phone)}`);
+      const walletResponse = await API.get(`wallet?phone=${encodeURIComponent(data.customerProfile.phone)}`, { notifyUnavailable: false });
       if (walletResponse?.success) {
         data.wallet.balance = walletResponse.balance;
         if (walletResponse.transactions?.length) data.wallet.entries = walletResponse.transactions;

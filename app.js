@@ -201,7 +201,9 @@ function applyCustomerSession(customer) {
 }
 
 async function refreshCustomerSession() {
-  const result = await API.get('customer-auth/me');
+  // Session refresh is a quiet bootstrap check. Sign-in and checkout actions report
+  // their own errors, while a missing session should not interrupt a public menu visit.
+  const result = await API.get('customer-auth/me', { notifyUnavailable: false });
   applyCustomerSession(result?.success ? result.customer : null);
 }
 
