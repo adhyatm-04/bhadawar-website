@@ -66,6 +66,7 @@ RAZORPAY_WEBHOOK_SECRET = os.environ.get('RAZORPAY_WEBHOOK_SECRET', '').strip()
 RAZORPAY_ALLOW_LIVE = os.environ.get('BHADAWAR_ENABLE_LIVE_PAYMENTS', '').lower() == 'true'
 MSG91_AUTH_KEY = os.environ.get('MSG91_AUTH_KEY', '').strip()
 MSG91_OTP_TEMPLATE_ID = os.environ.get('MSG91_OTP_TEMPLATE_ID', '').strip()
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '').strip()
 RESEND_FROM_EMAIL = os.environ.get('RESEND_FROM_EMAIL', '').strip()
 API_ONLY_MODE = os.environ.get('BHADAWAR_API_ONLY', '').lower() == 'true'
@@ -96,6 +97,7 @@ CUSTOMER_EMAIL_OTP_SENDS = StateStore('customer_email_otp_sends', 60 * 60)
 CUSTOMER_EMAIL_OTP_VERIFIES = StateStore('customer_email_otp_verifies', 15 * 60)
 CUSTOMER_EMAIL_OTP_CHALLENGES = StateStore('customer_email_otp_challenges', 10 * 60)
 CUSTOMER_EMAIL_LOGIN_CHALLENGES = StateStore('customer_email_login_challenges', 10 * 60)
+CUSTOMER_GOOGLE_LOGIN_CHALLENGES = StateStore('customer_google_login_challenges', 10 * 60)
 
 def party_deposit_for_guests(guests):
     return int(guests) * (30 if int(guests) >= 12 else 50)
@@ -198,6 +200,9 @@ def _migrate_db(conn):
         conn.execute('ALTER TABLE customer_accounts ADD COLUMN phone_verified_at TEXT')
     if 'email_verified_at' not in customer_columns:
         conn.execute('ALTER TABLE customer_accounts ADD COLUMN email_verified_at TEXT')
+    if 'google_sub' not in customer_columns:
+        conn.execute('ALTER TABLE customer_accounts ADD COLUMN google_sub TEXT')
+    conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_customer_accounts_google_sub ON customer_accounts(google_sub)')
     story_columns = {row[1] for row in conn.execute("PRAGMA table_info(food_stories)")}
     for name, declaration in (
         ('order_id', 'TEXT'),

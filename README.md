@@ -35,6 +35,7 @@ To add individual rider preview logins, set `BHADAWAR_RIDER_CREDENTIALS` in `.en
 ### Customer SMS OTP sign-in
 
 - Customer account creation and sign-in use MSG91's server-side OTP send and verify APIs. Set `MSG91_AUTH_KEY` and `MSG91_OTP_TEMPLATE_ID` in the backend server's environment (or private `.env`), then restart `server.py`. Never put the auth key in browser JavaScript.
+- Customers may also start with Google Identity Services. Set `GOOGLE_CLIENT_ID` on the backend to a Google OAuth Web client ID and add the production and local website origins to its Authorized JavaScript origins. Google sign-in only identifies the customer; account creation/linking and sign-in complete only after the mobile number's MSG91 OTP is verified.
 - In MSG91, create and approve an OTP template with the `##OTP##` placeholder, and complete the required Indian sender ID/DLT setup before sending. See MSG91's [OTP setup guide](https://msg91.com/help/sendotp/step-by-step-process-to-configure-otp) and [OTP API documentation](https://docs.msg91.com/otp).
 - Until both server values are configured, the OTP endpoints return `503` and do not fall back to a demo code. The implementation here has not sent a real SMS; first live send will use the MSG91 account configured by the site owner.
 

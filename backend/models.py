@@ -165,6 +165,7 @@ class CustomerAccount(Base):
     password_hash = Column(Text, nullable=False)
     phone_verified_at = Column(String)
     email_verified_at = Column(String)
+    google_sub = Column(String, unique=True)
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
 
 

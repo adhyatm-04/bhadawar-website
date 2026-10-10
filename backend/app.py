@@ -38,11 +38,11 @@ BASE_PATH = Path(BASE_DIR).resolve()
 SECURITY_HEADERS = {
     "Content-Security-Policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
     "form-action 'self' https://api.razorpay.com; "
-    "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; "
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://accounts.google.com; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; "
     "font-src 'self' data: https://fonts.gstatic.com; "
     "img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; "
-    "connect-src 'self' https:; frame-src https://www.google.com https://maps.google.com https://*.razorpay.com",
+    "connect-src 'self' https: https://accounts.google.com; frame-src https://www.google.com https://maps.google.com https://*.razorpay.com https://accounts.google.com",
     "X-Frame-Options": "DENY",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",

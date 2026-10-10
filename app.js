@@ -101,6 +101,9 @@ let publicPreviewMode = false;
 let customerSession = null;
 let accountAuthMode = 'register';
 let accountOtpChallenge = null;
+let accountGoogleChallenge = null;
+let googleSignInConfig = null;
+let googleIdentityScriptPromise = null;
 let accountEmailOtpChallenge = false;
 let customerAuthDraft = { name: '', email: '', phone: '' };
 let activeCategory = 'popular';
@@ -1685,31 +1688,46 @@ function renderAccountPage() {
     const returningToCheckout = resumeCheckoutAfterSignIn();
     const registerMode = accountAuthMode === 'register';
     const activeChallenge = accountOtpChallenge?.mode === accountAuthMode ? accountOtpChallenge : null;
+    const googleChallengeActive = Boolean(accountGoogleChallenge);
+    const googleOtpSent = Boolean(accountGoogleChallenge?.otpSent);
     document.body.classList.remove('account-signed-in');
     container.innerHTML = `
       <div class="dialog-kicker">CUSTOMER ACCOUNT · SECURE SIGN IN</div>
-      <h2 class="account-profile-title">${returningToCheckout ? 'Sign in to finish your' : (registerMode ? 'Create your' : 'Welcome back to your')} <em>${returningToCheckout ? 'order.' : (registerMode ? 'profile.' : 'account.')}</em></h2>
-      <p class="account-profile-copy">${returningToCheckout ? 'Your cart is saved. Sign in or create an account to continue to checkout.' : 'Sign in to manage your orders and saved details.'}</p>
-      <div class="account-auth-switch" role="tablist" aria-label="Account access">
-        <button type="button" data-account-auth-mode="register" class="${registerMode ? 'active' : ''}" role="tab" aria-selected="${registerMode}">Create account</button>
-        <button type="button" data-account-auth-mode="login" class="${!registerMode ? 'active' : ''}" role="tab" aria-selected="${!registerMode}">Sign in</button>
-      </div>
-      <form id="customer-access-form" class="account-profile-form" data-auth-mode="${registerMode ? 'register' : 'login'}">
-        ${registerMode ? `<label>Full name<input name="name" autocomplete="name" required maxlength="120" placeholder="Your name" value="${escapeHtml(customerAuthDraft.name)}"></label><label>Email address <span class="account-unverified">Optional</span><input name="email" type="email" autocomplete="email" placeholder="you@example.com" value="${escapeHtml(customerAuthDraft.email)}"></label>` : ''}
-        <label class="${registerMode ? '' : 'account-field-wide'}">Mobile number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" pattern="[+0-9() -]{10,18}" required placeholder="+91 98765 43210" value="${escapeHtml(activeChallenge?.phone || customerAuthDraft.phone)}" ${activeChallenge ? 'readonly' : ''}></label>
-        ${activeChallenge ? `<label class="account-field-wide">SMS verification code<input name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,8}" minlength="4" maxlength="8" required placeholder="Enter the code from SMS"></label><p class="account-otp-help account-field-wide">We sent a code to ${escapeHtml(activeChallenge.phone)}. <button type="button" id="customer-otp-change">Change number</button> · <button type="button" id="customer-otp-resend">Resend code</button></p>` : ''}
-        <button class="button button-green account-profile-submit" type="submit">${activeChallenge ? 'Verify & continue →' : (registerMode ? 'Send OTP →' : (returningToCheckout ? 'Send OTP & continue →' : 'Send sign-in code →'))}</button>
-      </form>
-      <p class="account-preview-note">Sign in with a one-time SMS code. Email is optional and can be verified from your profile.</p>`;
+      <h2 class="account-profile-title">${googleChallengeActive ? 'Verify your mobile number' : (returningToCheckout ? 'Sign in to finish your' : (registerMode ? 'Create your' : 'Welcome back to your'))} <em>${googleChallengeActive ? 'to continue.' : (returningToCheckout ? 'order.' : (registerMode ? 'profile.' : 'account.'))}</em></h2>
+      <p class="account-profile-copy">${googleChallengeActive ? 'Google account selected. Confirm your mobile number with a one-time SMS code to create or access your account.' : (returningToCheckout ? 'Your cart is saved. Sign in or create an account to continue to checkout.' : 'Sign in to manage your orders and saved details.')}</p>
+      ${googleChallengeActive ? `<div class="account-google-identity"><span>Google account</span><strong>${escapeHtml(accountGoogleChallenge.email)}</strong></div>
+        <form id="customer-access-form" class="account-profile-form" data-auth-mode="google">
+          <label class="account-field-wide">Mobile number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" pattern="[+0-9() -]{10,18}" required placeholder="+91 98765 43210" value="${escapeHtml(accountGoogleChallenge.phone || '')}" ${googleOtpSent ? 'readonly' : ''}></label>
+          ${googleOtpSent ? `<label class="account-field-wide">SMS verification code<input name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,8}" minlength="4" maxlength="8" required placeholder="Enter the code from SMS"></label><p class="account-otp-help account-field-wide">We sent a code to ${escapeHtml(accountGoogleChallenge.phone)}. <button type="button" id="google-otp-change">Change number</button> · <button type="button" id="google-otp-resend">Resend code</button></p>` : ''}
+          <button class="button button-green account-profile-submit" type="submit">${googleOtpSent ? 'Verify mobile & continue →' : 'Send mobile OTP →'}</button>
+        </form><button type="button" class="account-google-cancel" id="google-signin-cancel">Use a different sign-in method</button>
+        <p class="account-preview-note">You must verify this mobile number before account access.</p>` : `
+        <div class="account-auth-switch" role="tablist" aria-label="Account access">
+          <button type="button" data-account-auth-mode="register" class="${registerMode ? 'active' : ''}" role="tab" aria-selected="${registerMode}">Create account</button>
+          <button type="button" data-account-auth-mode="login" class="${!registerMode ? 'active' : ''}" role="tab" aria-selected="${!registerMode}">Sign in</button>
+        </div>
+        <form id="customer-access-form" class="account-profile-form" data-auth-mode="${registerMode ? 'register' : 'login'}">
+          ${registerMode ? `<label>Full name<input name="name" autocomplete="name" required maxlength="120" placeholder="Your name" value="${escapeHtml(customerAuthDraft.name)}"></label><label>Email address <span class="account-unverified">Optional</span><input name="email" type="email" autocomplete="email" placeholder="you@example.com" value="${escapeHtml(customerAuthDraft.email)}"></label>` : ''}
+          <label class="${registerMode ? '' : 'account-field-wide'}">Mobile number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" pattern="[+0-9() -]{10,18}" required placeholder="+91 98765 43210" value="${escapeHtml(activeChallenge?.phone || customerAuthDraft.phone)}" ${activeChallenge ? 'readonly' : ''}></label>
+          ${activeChallenge ? `<label class="account-field-wide">SMS verification code<input name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,8}" minlength="4" maxlength="8" required placeholder="Enter the code from SMS"></label><p class="account-otp-help account-field-wide">We sent a code to ${escapeHtml(activeChallenge.phone)}. <button type="button" id="customer-otp-change">Change number</button> · <button type="button" id="customer-otp-resend">Resend code</button></p>` : ''}
+          <button class="button button-green account-profile-submit" type="submit">${activeChallenge ? 'Verify & continue →' : (registerMode ? 'Send OTP →' : (returningToCheckout ? 'Send OTP & continue →' : 'Send sign-in code →'))}</button>
+        </form>
+        ${activeChallenge ? '' : `<div class="account-google-divider"><span>OR</span></div><div id="google-signin-button" class="account-google-button" aria-live="polite">Loading Google sign-in…</div><p class="account-google-help">Continue with Google, then verify your mobile number by SMS OTP.</p>`}
+        <p class="account-preview-note">Sign in with a one-time SMS code. Email is optional and can be verified from your profile.</p>`}`;
     container.querySelectorAll('[data-account-auth-mode]').forEach(button => button.addEventListener('click', () => {
       accountAuthMode = button.dataset.accountAuthMode;
       accountOtpChallenge = null;
+      accountGoogleChallenge = null;
       customerAuthDraft = { name: '', email: '', phone: '' };
       renderAccountPage();
     }));
     $('#customer-access-form')?.addEventListener('submit', handleCustomerAccess);
     $('#customer-otp-change')?.addEventListener('click', () => { accountOtpChallenge = null; renderAccountPage(); });
     $('#customer-otp-resend')?.addEventListener('click', () => requestCustomerOtp($('#customer-access-form'), true));
+    $('#google-signin-cancel')?.addEventListener('click', () => { accountGoogleChallenge = null; renderAccountPage(); });
+    $('#google-otp-change')?.addEventListener('click', () => { accountGoogleChallenge = { ...accountGoogleChallenge, phone: '', otpSent: false }; renderAccountPage(); });
+    $('#google-otp-resend')?.addEventListener('click', () => requestGoogleCustomerOtp($('#customer-access-form'), true));
+    if (!googleChallengeActive && !activeChallenge) initializeGoogleSignIn();
     return;
   }
   const nav = [
@@ -1867,11 +1885,131 @@ function renderAccountPage() {
   });
   if (accountSection === 'orders') loadAccountOrderHistory(profile.phone);
 }
+async function initializeGoogleSignIn() {
+  const target = $('#google-signin-button');
+  if (!target) return;
+  if (!googleSignInConfig) {
+    const result = await API.get('customer-auth/google/config');
+    if (!result?.success || !result.configured || !result.client_id) {
+      if (target.isConnected) target.textContent = 'Google sign-in will be available after setup.';
+      return;
+    }
+    googleSignInConfig = result.client_id;
+  }
+  if (!target.isConnected) return;
+  const loaded = await loadGoogleIdentityScript();
+  if (!target.isConnected) return;
+  if (!loaded || !window.google?.accounts?.id) {
+    target.textContent = 'Google sign-in could not load. You can continue with mobile OTP above.';
+    return;
+  }
+  target.replaceChildren();
+  window.google.accounts.id.initialize({
+    client_id: googleSignInConfig,
+    callback: handleGoogleCredential,
+    auto_select: false,
+    cancel_on_tap_outside: true
+  });
+  window.google.accounts.id.renderButton(target, {
+    type: 'standard',
+    theme: 'outline',
+    size: 'large',
+    text: 'continue_with',
+    shape: 'rectangular',
+    logo_alignment: 'left',
+    width: Math.max(220, Math.min(target.clientWidth || 360, 400))
+  });
+}
+
+function loadGoogleIdentityScript() {
+  if (window.google?.accounts?.id) return Promise.resolve(true);
+  if (googleIdentityScriptPromise) return googleIdentityScriptPromise;
+  googleIdentityScriptPromise = new Promise(resolve => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve(Boolean(window.google?.accounts?.id));
+    script.onerror = () => resolve(false);
+    document.head.append(script);
+  });
+  return googleIdentityScriptPromise;
+}
+
+async function handleGoogleCredential(response) {
+  const credential = String(response?.credential || '');
+  if (!credential) {
+    toast('Google could not verify this sign-in. Please try again.', true);
+    return;
+  }
+  const result = await API.post('customer-auth/google/start', { credential });
+  if (!result?.success || !result.challenge) {
+    toast(result?.error || 'Google sign-in could not start. Please try again.', true);
+    return;
+  }
+  accountOtpChallenge = null;
+  accountGoogleChallenge = {
+    challenge: result.challenge,
+    email: result.email || '',
+    name: result.name || '',
+    phone: '',
+    otpSent: false
+  };
+  renderAccountPage();
+  toast('Now enter your mobile number to verify it by SMS.');
+}
+
+async function requestGoogleCustomerOtp(form, isResend = false) {
+  if (!form || !accountGoogleChallenge) return;
+  const fields = new FormData(form);
+  const phone = String(fields.get('phone') || '').trim();
+  const submit = form.querySelector('button[type="submit"]');
+  if (submit) submit.disabled = true;
+  const result = await API.post('customer-auth/google/otp/request', {
+    challenge: accountGoogleChallenge.challenge,
+    phone
+  });
+  if (!result?.success) {
+    if (submit) submit.disabled = false;
+    toast(result?.error || 'Could not send the mobile verification code. Please try again.', true);
+    return;
+  }
+  accountGoogleChallenge = { ...accountGoogleChallenge, phone, otpSent: true };
+  renderAccountPage();
+  toast(isResend ? 'A new mobile verification code was requested.' : 'Mobile verification code sent by SMS.');
+}
+
 async function handleCustomerAccess(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const fields = new FormData(form);
   const mode = form.dataset.authMode;
+  if (mode === 'google') {
+    if (!accountGoogleChallenge) {
+      toast('Your Google sign-in expired. Please start again.', true);
+      renderAccountPage();
+      return;
+    }
+    if (!accountGoogleChallenge.otpSent) {
+      await requestGoogleCustomerOtp(form, false);
+      return;
+    }
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    const result = await API.post('customer-auth/google/otp/verify', {
+      challenge: accountGoogleChallenge.challenge,
+      phone: String(fields.get('phone') || '').trim(),
+      otp: String(fields.get('otp') || '').trim()
+    });
+    if (!result?.success || !result.customer) {
+      if (submit) submit.disabled = false;
+      toast(result?.error || 'That code could not be verified. Request another code and try again.', true);
+      return;
+    }
+    accountGoogleChallenge = null;
+    finishCustomerSignIn(result.customer);
+    return;
+  }
   const payload = {
     phone: String(fields.get('phone') || '').trim(),
     purpose: mode

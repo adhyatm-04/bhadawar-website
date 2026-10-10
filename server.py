@@ -28,11 +28,11 @@ class BhadawarRequestContext(AuthHandlers, BookingHandlers, CommunityHandlers, O
         defaults = {
             "Content-Security-Policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
             "form-action 'self' https://api.razorpay.com; "
-            "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://accounts.google.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; "
             "font-src 'self' data: https://fonts.gstatic.com; "
             "img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; "
-            "connect-src 'self' https:; frame-src https://www.google.com https://maps.google.com https://*.razorpay.com",
+            "connect-src 'self' https: https://accounts.google.com; frame-src https://www.google.com https://maps.google.com https://*.razorpay.com https://accounts.google.com",
             "X-Frame-Options": "DENY",
             "X-Content-Type-Options": "nosniff",
             "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -128,6 +128,8 @@ class BhadawarRequestContext(AuthHandlers, BookingHandlers, CommunityHandlers, O
             self._send_json({'success': True, 'staff': staff} if staff else {'success': True, 'staff': None})
         elif path == '/api/customer-auth/me':
             self._send_json({'success': True, 'customer': self._customer()}, extra_headers={'Cache-Control': 'no-store'})
+        elif path == '/api/customer-auth/google/config':
+            self.handle_customer_google_config()
         elif path == '/api/payment-config':
             self._send_json({'success': True, 'razorpay_enabled': razorpay_enabled(),
                              'key_id': RAZORPAY_KEY_ID if razorpay_enabled() else '',
@@ -183,6 +185,12 @@ class BhadawarRequestContext(AuthHandlers, BookingHandlers, CommunityHandlers, O
             self.handle_customer_otp_request()
         elif path == '/api/customer-auth/otp/verify':
             self.handle_customer_otp_verify()
+        elif path == '/api/customer-auth/google/start':
+            self.handle_customer_google_start()
+        elif path == '/api/customer-auth/google/otp/request':
+            self.handle_customer_google_otp_request()
+        elif path == '/api/customer-auth/google/otp/verify':
+            self.handle_customer_google_otp_verify()
         elif path == '/api/customer-auth/email-otp/request':
             self.handle_customer_email_otp_request()
         elif path == '/api/customer-auth/email-otp/verify':
